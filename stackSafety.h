@@ -1,8 +1,6 @@
-// #include "stack.h"
+#ifndef STACK_SAFETY_H
+#define STACK_SAFETY_H
 
-// stackErr verifyStack(stack stk);
+stackErr verifyStack(stack* stk);
 
-// stackErr verifyStack(stack stk){
-
-// }
-
+#endif /* STACK_SAFETY_H */
