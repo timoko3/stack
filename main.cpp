@@ -2,13 +2,13 @@ typedef int stack_t;
 
 #include "stack.h"
 
-#define stackCtor(stk, capacity) if(stackCtor(stk, capacity) != PROCESS_OK) return stk1.error
-#define stackPush(stk, value)    if(stackPush(stk, value) != PROCESS_OK) return stk1.error
-#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem) != PROCESS_OK) return stk1.error
+#define stackCtor(stk, capacity) if(stackCtor(stk, capacity) != PROCESS_OK) return stk1.error.type
+#define stackPush(stk, value)    if(stackPush(stk, value) != PROCESS_OK) return stk1.error.type
+#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem) != PROCESS_OK) return stk1.error.type
 
 int main(void){
-    stack stk1 = {};
-    size_t capacity = 5;
+    stack stk1 = {0};
+    size_t capacity = 1;
     
     stackCtor(&stk1, capacity);
 

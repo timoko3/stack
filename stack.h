@@ -11,7 +11,7 @@ const int POISON_NUMBER = 0;
 const int AMOUNT_ERROR_TYPES = 6;
 
 /// для использования в функциях этого файла
-#define verify if(verifyStack(stk, __FUNCTION__, __FILE__, __LINE__)!=PROCESS_OK)return stk->error;
+#define verify if(verifyStack(stk, __FUNCTION__, __FILE__, __LINE__)!=PROCESS_OK)return stk->error.type;
 #define dump(stk) stackDump(stk, function, file, line);
 
 enum stackErr{
@@ -23,27 +23,26 @@ enum stackErr{
     PROCESS_OK
 };
 
-// struct errorDescription{
-//     stackErr type;
-//     const char* text;
-// };
+struct errorDescription{
+    stackErr type;
+    const char* text;
+};
 
 struct stack{
     stack_t* data;
     size_t size;
     size_t capacity;
-    stackErr error = PROCESS_OK;
+    errorDescription error;
 };
 
-// struct errorDescription errors[AMOUNT_ERROR_TYPES]{
-//     {BAD_CAPACITY, "Вместимость data недопустима\n"},
-//     {NULL_POINTER, "Указатели не должны быть нулевыми\n"},
-//     {BAD_SIZE, "Размер недопустим\n"},
-//     {BAD_MEMORY_ALLOCATION, "Некорректное выделение памяти\n"},
-//     {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоти недопустимо\n"},
-//     {PROCESS_OK, "Все хорошо\n"}
-// };
-
+struct errorDescription errors[AMOUNT_ERROR_TYPES]{
+    {BAD_CAPACITY, "Вместимость data недопустима\n"},
+    {NULL_POINTER, "Указатели не должны быть нулевыми\n"},
+    {BAD_SIZE, "Размер недопустим\n"},
+    {BAD_MEMORY_ALLOCATION, "Некорректное выделение памяти\n"},
+    {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоcти недопустимо\n"},
+    {PROCESS_OK, "Все хорошо\n"}
+};
 
 
 stackErr stackCtor(stack* stk, size_t capacity);
@@ -52,21 +51,34 @@ stackErr stackPop(stack* stk, stack_t* stackElem);
 void stackDump(stack* stk, const char* function, const char* file, const int line);
 stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
 
+static void assignErrorStruct(stack* stk, stackErr type);
+
 stackErr stackCtor(stack* stk, size_t capacity){
     assert(stk);
+    assert(capacity > 0);
 
     stk->capacity = capacity;
 
-    stk->size = 18;
+    stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
 
     verify
     
-
     return PROCESS_OK;
 }
 
 stackErr stackPush(stack* stk, stack_t value){
+    verify
+
+    if(stk->size == stk->capacity){
+        verify
+        stk->capacity = (stk->capacity) * 2;
+        stack_t* temp = (stack_t*) realloc(stk->data, (stk->capacity) * sizeof(stack_t));
+        assert(temp);
+
+        stk->data = temp;
+    }
+
     verify
 
     stk->data[stk->size] = value;
@@ -97,7 +109,13 @@ void stackDump(stack* stk, const char* function, const char* file, const int lin
         return;
     }
     
-    printf(SET_STYLE_FONT_RED"ERROR TYPE: %d\n"RESET, stk->error);
+    if(stk->error.type == PROCESS_OK){
+        printf(SET_STYLE_FONT_GREEN"OK\n"RESET);
+    }
+    else{
+        printf(SET_STYLE_FONT_RED"ERROR: %s\n"RESET, stk->error.text);
+    }
+
     printf("%s()\n", __FUNCTION__);
     printf("stack<int>[%p]\n", stk);
 
@@ -126,31 +144,44 @@ void stackDump(stack* stk, const char* function, const char* file, const int lin
 stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
 
     if(stk == NULL){
-        stk->error = NULL_POINTER;
+        assignErrorStruct(stk, NULL_POINTER);
         printf("stk — нулевой указатель\n");  
     } 
+    else{
+        if(stk->data == NULL){  
+            assignErrorStruct(stk, NULL_POINTER);
+            printf("data — нулевой указатель\n");
+        }
 
-    if(stk->data == NULL){  
-        stk->error = NULL_POINTER;
-        printf("data — нулевой указатель\n");
+        else if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
+            assignErrorStruct(stk, BAD_CAPACITY);
+        }
+
+        else if(stk->size > stk->capacity){
+            assignErrorStruct(stk, SIZE_EXCEEDS_CAPACITY);
+        }
+
+        else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
+            assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
+        }
+        else{
+            assignErrorStruct(stk, PROCESS_OK);
+        }
+              
     }
 
-    if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
-        stk->error = BAD_CAPACITY;
-        dump(stk)
-    }
+    dump(stk);
+    return stk->error.type;
+}
 
-    if(stk->size > stk->capacity){
-        stk->error = SIZE_EXCEEDS_CAPACITY;
-        dump(stk);
-    }
+static void assignErrorStruct(stack* stk, stackErr type){
+    assert(stk);
 
-    if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
-        stk->error = BAD_MEMORY_ALLOCATION;
-        dump(stk);
-    }      
-    
-    return stk->error;
+    for(size_t curErrInd = 0; curErrInd < AMOUNT_ERROR_TYPES; curErrInd++){
+        if(errors[curErrInd].type == type){
+            stk->error = errors[curErrInd];
+        }
+    }
 }
 
 
