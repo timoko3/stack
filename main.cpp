@@ -20,7 +20,7 @@ int main(void){
     stack_t stackElem = 0;
     stackPop(&stk1, &stackElem);
     
-    stackDump(&stk1);
+    // stackDump(&stk1);
     
     free(stk1.data);
 

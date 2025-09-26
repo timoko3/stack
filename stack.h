@@ -5,11 +5,14 @@
 #include <assert.h>
 #include <malloc.h>
 
+#include "consoleColors.h"
+
 const int POISON_NUMBER = 0;
 const int AMOUNT_ERROR_TYPES = 6;
 
 /// для использования в функциях этого файла
-#define verify if(verifyStack(stk)!=PROCESS_OK)return stk->error;
+#define verify if(verifyStack(stk, __FUNCTION__, __FILE__, __LINE__)!=PROCESS_OK)return stk->error;
+#define dump(stk) stackDump(stk, function, file, line);
 
 enum stackErr{
     BAD_CAPACITY,
@@ -46,18 +49,17 @@ struct stack{
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
-void stackDump(stack* stk);
-stackErr verifyStack(stack* stk);
+void stackDump(stack* stk, const char* function, const char* file, const int line);
+stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
 
 stackErr stackCtor(stack* stk, size_t capacity){
     assert(stk);
 
     stk->capacity = capacity;
 
-    stk->size = 0;
+    stk->size = 18;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
 
-    // printf("Код ошибки — %d\n", verifyStack(stk));
     verify
     
 
@@ -89,15 +91,18 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     return PROCESS_OK;
 }
 
-void stackDump(stack* stk){
+void stackDump(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
-        printf("Передача нулевого указателя недопустима\n");
+        printf("Передача нулевого указателя недопустима\n");                                                                                                                                            printf ("MEOW \a\a\a\a\a\a");
         return;
     }
-
-    printf("ERROR TYPE: %d\n", stk->error);
+    
+    printf(SET_STYLE_FONT_RED"ERROR TYPE: %d\n"RESET, stk->error);
     printf("%s()\n", __FUNCTION__);
     printf("stack<int>[%p]\n", stk);
+
+    printf("Called from function %s at file %s:line %d\n", function, file, line);
+
     printf("{\n");
     printf("\tsize = %lu\n", stk->size);
     printf("\tcapacity = %lu\n\n", stk->capacity);
@@ -110,7 +115,7 @@ void stackDump(stack* stk){
             printf("\t\t*[%lu] = %d\n", curElemInd, stk->data[curElemInd]);
         }
         else {
-            printf("\t\t[%lu] = %d (POISON NUMBER)\n", curElemInd, stk->data[curElemInd]);
+            printf("\t\t[%lu] = %d" SET_STYLE_FONT_RED" (POISON NUMBER)\n"RESET, curElemInd, stk->data[curElemInd]);
         }
     }
     printf("\t}\n");
@@ -118,7 +123,7 @@ void stackDump(stack* stk){
     
 }
 
-stackErr verifyStack(stack* stk){
+stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
 
     if(stk == NULL){
         stk->error = NULL_POINTER;
@@ -132,17 +137,17 @@ stackErr verifyStack(stack* stk){
 
     if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
         stk->error = BAD_CAPACITY;
-        stackDump(stk);
+        dump(stk)
     }
 
     if(stk->size > stk->capacity){
         stk->error = SIZE_EXCEEDS_CAPACITY;
-        stackDump(stk);
+        dump(stk);
     }
 
     if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
         stk->error = BAD_MEMORY_ALLOCATION;
-        stackDump(stk);
+        dump(stk);
     }      
     
     return stk->error;
