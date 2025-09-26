@@ -6,9 +6,10 @@
 #include <malloc.h>
 
 const int POISON_NUMBER = 0;
+const int AMOUNT_ERROR_TYPES = 6;
 
 /// для использования в функциях этого файла
-#define verify if(verifyStack(stk) != PROCESS_OK) return stk->error;
+#define verify if(verifyStack(stk)!=PROCESS_OK)return stk->error;
 
 enum stackErr{
     BAD_CAPACITY,
@@ -19,6 +20,11 @@ enum stackErr{
     PROCESS_OK
 };
 
+// struct errorDescription{
+//     stackErr type;
+//     const char* text;
+// };
+
 struct stack{
     stack_t* data;
     size_t size;
@@ -26,55 +32,70 @@ struct stack{
     stackErr error = PROCESS_OK;
 };
 
+// struct errorDescription errors[AMOUNT_ERROR_TYPES]{
+//     {BAD_CAPACITY, "Вместимость data недопустима\n"},
+//     {NULL_POINTER, "Указатели не должны быть нулевыми\n"},
+//     {BAD_SIZE, "Размер недопустим\n"},
+//     {BAD_MEMORY_ALLOCATION, "Некорректное выделение памяти\n"},
+//     {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоти недопустимо\n"},
+//     {PROCESS_OK, "Все хорошо\n"}
+// };
+
 
 
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
-stackErr stackPop(stack* stk, int* stackElem);
+stackErr stackPop(stack* stk, stack_t* stackElem);
 void stackDump(stack* stk);
 stackErr verifyStack(stack* stk);
 
 stackErr stackCtor(stack* stk, size_t capacity){
-    
+    assert(stk);
+
     stk->capacity = capacity;
 
     stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
 
-    printf("Код ошибки — %d\n", verifyStack(stk));
+    // printf("Код ошибки — %d\n", verifyStack(stk));
+    verify
     
 
     return PROCESS_OK;
 }
 
 stackErr stackPush(stack* stk, stack_t value){
-    
-    printf("Код ошибки — %d\n", verifyStack(stk));
+    verify
 
     stk->data[stk->size] = value;
     (stk->size)++;
     
-    printf("Код ошибки — %d\n", verifyStack(stk));
+    verify
 
     return PROCESS_OK;
 }
 
-stackErr stackPop(stack* stk, int* stackElem){
+stackErr stackPop(stack* stk, stack_t* stackElem){
     assert(stackElem);
 
-    printf("Код ошибки — %d\n", verifyStack(stk));
+    verify
 
     *stackElem = stk->data[stk->size - 1];
     stk->data[stk->size - 1] = POISON_NUMBER;
     (stk->size)--;
 
-    printf("Код ошибки — %d\n", verifyStack(stk));
+    verify
 
     return PROCESS_OK;
 }
 
 void stackDump(stack* stk){
-    printf("ERROR NUMBER: %d\n", stk->error);
+    if(stk == NULL){
+        printf("Передача нулевого указателя недопустима\n");
+        return;
+    }
+
+    printf("ERROR TYPE: %d\n", stk->error);
     printf("%s()\n", __FUNCTION__);
     printf("stack<int>[%p]\n", stk);
     printf("{\n");
@@ -97,17 +118,16 @@ void stackDump(stack* stk){
     
 }
 
-#include "stack.h"
-
 stackErr verifyStack(stack* stk){
 
     if(stk == NULL){
         stk->error = NULL_POINTER;
-        
+        printf("stk — нулевой указатель\n");  
     } 
 
     if(stk->data == NULL){  
         stk->error = NULL_POINTER;
+        printf("data — нулевой указатель\n");
     }
 
     if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
@@ -127,6 +147,8 @@ stackErr verifyStack(stack* stk){
     
     return stk->error;
 }
+
+
 
 
 #endif /* STACK_H */
