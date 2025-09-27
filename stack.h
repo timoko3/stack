@@ -8,13 +8,15 @@
 
 #include "consoleColors.h"
 
-#define DEBUG
+// #define DEBUG
+// #define DEBUG_LEVEL
 
-const int POISON_NUMBER = 0;
-const int AMOUNT_ERROR_TYPES = 6;
+const int POISON_NUMBER      = INT_MAX / 10;
+const int AMOUNT_ERROR_TYPES = 8;
 
 #ifdef DEBUG
-const stack_t CANARY_PROTECTION_SIZE = 2;
+const size_t CANARY_PROTECTION_SIZE    = 2;
+const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
 /// для использования в функциях этого файла
@@ -27,12 +29,25 @@ enum stackErr{
     BAD_SIZE,
     BAD_MEMORY_ALLOCATION,
     SIZE_EXCEEDS_CAPACITY,
+    CANARY_TORTURE,
+    POP_WITH_BAD_SIZE,
     PROCESS_OK
 };
 
 struct errorDescription{
     stackErr type;
     const char* text;
+};
+
+struct errorDescription errors[AMOUNT_ERROR_TYPES]{
+    {BAD_CAPACITY, "Вместимость data недопустима\n"},
+    {NULL_POINTER, "Указатели не должны быть нулевыми\n"},
+    {BAD_SIZE, "Размер недопустим\n"},
+    {BAD_MEMORY_ALLOCATION, "Некорректное выделение памяти\n"},
+    {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоcти недопустимо\n"},
+    {CANARY_TORTURE, "Канарейка была замучена до смерти\n"},
+    {POP_WITH_BAD_SIZE, "Попытка достать элемент из недопустимой области\n"},
+    {PROCESS_OK, "Все хорошо\n"}
 };
 
 struct stack{
@@ -42,24 +57,18 @@ struct stack{
     errorDescription error;
 };
 
-struct errorDescription errors[AMOUNT_ERROR_TYPES]{
-    {BAD_CAPACITY, "Вместимость data недопустима\n"},
-    {NULL_POINTER, "Указатели не должны быть нулевыми\n"},
-    {BAD_SIZE, "Размер недопустим\n"},
-    {BAD_MEMORY_ALLOCATION, "Некорректное выделение памяти\n"},
-    {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоcти недопустимо\n"},
-    {PROCESS_OK, "Все хорошо\n"}
-};
-
 
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
+static void InitializeStackBuffer(stack* stk, size_t startStackInd);
 
 #ifdef DEBUG
-void stackDump(stack* stk, const char* function, const char* file, const int line);
-stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
+static void stackDump(stack* stk, const char* function, const char* file, const int line);
+static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
+static void setCanaryProtection(stack* stk);
 static void assignErrorStruct(stack* stk, stackErr type);
+static stackErr canaryCheck(stack* stk);
 #endif /* DEBUG */
 
 stackErr stackCtor(stack* stk, size_t capacity){
@@ -76,7 +85,10 @@ stackErr stackCtor(stack* stk, size_t capacity){
     stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
 
+    InitializeStackBuffer(stk, 0);
+    
     #ifdef DEBUG
+    setCanaryProtection(stk);
     verify
     #endif /* DEBUG */
 
@@ -103,6 +115,12 @@ stackErr stackPush(stack* stk, stack_t value){
         assert(temp);
 
         stk->data = temp;
+
+        InitializeStackBuffer(stk, stk->size + 1);
+
+        #ifdef DEBUG
+        setCanaryProtection(stk);
+        #endif /* DEBUG */
     }
 
     #ifdef DEBUG
@@ -132,9 +150,15 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     #endif /* DEBUG */
 
     #ifdef DEBUG
+    if(stk->data[stk->size] == CANARY_PROTECTION_NUMBER){
+        return POP_WITH_BAD_SIZE;
+    }
     *stackElem = stk->data[stk->size];
     stk->data[stk->size] = POISON_NUMBER;
     #else
+    if(stk->size <= 0){
+        return POP_WITH_BAD_SIZE;
+    }
     *stackElem = stk->data[stk->size - 1];
     stk->data[stk->size - 1] = POISON_NUMBER;
     #endif
@@ -148,8 +172,59 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     return PROCESS_OK;
 }
 
+static void InitializeStackBuffer(stack* stk, size_t startStackInd){
+    assert(stk);
+
+    for(size_t curStackElem = startStackInd; curStackElem < stk->capacity; curStackElem++){
+        stk->data[curStackElem] = POISON_NUMBER;
+    }
+}
+
 #ifdef DEBUG
-void stackDump(stack* stk, const char* function, const char* file, const int line){
+
+static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
+    if(stk == NULL){
+        printf("stk — нулевой указатель\n");  
+    } 
+    else{
+        if(stk->data == NULL){  
+            assignErrorStruct(stk, NULL_POINTER);
+            printf("data — нулевой указатель\n");
+        }
+
+        else if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
+            assignErrorStruct(stk, BAD_CAPACITY);
+        }
+
+        else if(stk->size > stk->capacity){
+            assignErrorStruct(stk, SIZE_EXCEEDS_CAPACITY);
+        }
+
+        else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
+            assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
+        }
+        else if(canaryCheck(stk) != PROCESS_OK);
+        else{
+            assignErrorStruct(stk, PROCESS_OK);
+        }
+    }
+
+    dump(stk);
+    return stk->error.type;
+}
+
+
+static void assignErrorStruct(stack* stk, stackErr type){
+    assert(stk);
+
+    for(size_t curErrInd = 0; curErrInd < AMOUNT_ERROR_TYPES; curErrInd++){
+        if(errors[curErrInd].type == type){
+            stk->error = errors[curErrInd];
+        }
+    }
+}
+
+void static stackDump(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
         printf("Передача нулевого указателя недопустима\n");                                                                                                                                            printf ("MEOW \a\a\a\a\a\a");
         return;
@@ -175,11 +250,14 @@ void stackDump(stack* stk, const char* function, const char* file, const int lin
     printf("\tdata[%p]\n", stk->data);
     printf("\t{\n");
     for(size_t curElemInd = 0; curElemInd < stk->capacity; curElemInd++){
-        if(stk->data[curElemInd] != POISON_NUMBER){
-            printf("\t\t*[%lu] = %d\n", curElemInd, stk->data[curElemInd]);
-        }
-        else {
+        if(stk->data[curElemInd] == POISON_NUMBER) {
             printf("\t\t[%lu] = %d" SET_STYLE_FONT_RED" (POISON NUMBER)\n"RESET, curElemInd, stk->data[curElemInd]);
+        }
+        else if(stk->data[curElemInd] == CANARY_PROTECTION_NUMBER){
+            printf("\t\t[%lu] = %d" SET_STYLE_FONT_YELLOW" (CANARY NUMBER)\n"RESET, curElemInd, stk->data[curElemInd]);
+        }
+        else{
+            printf("\t\t*[%lu] = %d\n", curElemInd, stk->data[curElemInd]);
         }
     }
     printf("\t}\n");
@@ -187,49 +265,23 @@ void stackDump(stack* stk, const char* function, const char* file, const int lin
     
 }
 
-
-stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
-
-    if(stk == NULL){
-        assignErrorStruct(stk, NULL_POINTER);
-        printf("stk — нулевой указатель\n");  
-    } 
-    else{
-        if(stk->data == NULL){  
-            assignErrorStruct(stk, NULL_POINTER);
-            printf("data — нулевой указатель\n");
-        }
-
-        else if((stk == 0) || (stk->capacity > (size_t) 1e+9)){
-            assignErrorStruct(stk, BAD_CAPACITY);
-        }
-
-        else if(stk->size > stk->capacity){
-            assignErrorStruct(stk, SIZE_EXCEEDS_CAPACITY);
-        }
-
-        else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
-            assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
-        }
-        else{
-            assignErrorStruct(stk, PROCESS_OK);
-        }
-              
-    }
-
-    dump(stk);
-    return stk->error.type;
-}
-
-
-static void assignErrorStruct(stack* stk, stackErr type){
+static void setCanaryProtection(stack* stk){
     assert(stk);
 
-    for(size_t curErrInd = 0; curErrInd < AMOUNT_ERROR_TYPES; curErrInd++){
-        if(errors[curErrInd].type == type){
-            stk->error = errors[curErrInd];
-        }
+    stk->data[0] = CANARY_PROTECTION_NUMBER;
+    stk->data[stk->capacity - 1] = CANARY_PROTECTION_NUMBER;
+
+}
+
+static stackErr canaryCheck(stack* stk){
+    assert(stk);
+    if((stk->data[0] != CANARY_PROTECTION_NUMBER) || (stk->data[stk->capacity - CANARY_PROTECTION_SIZE / 2] != CANARY_PROTECTION_NUMBER)){
+
+        assignErrorStruct(stk, CANARY_TORTURE);
+        return CANARY_TORTURE;
     }
+
+    return PROCESS_OK;
 }
 
 #endif /* DEBUG */
