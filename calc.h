@@ -3,6 +3,8 @@
 #include "workWIthFiles.h"
 #include "stack.h"
 
+// #define DEBUG
+
 const int nCommands = 5;
 
 typedef bool (*command)(stack*);

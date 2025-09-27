@@ -8,13 +8,16 @@
 
 #include "consoleColors.h"
 
-// #define DEBUG
-// #define DEBUG_LEVEL
+#define DEBUG_LEVEL 0 
+
+#if DEBUG_LEVEL == 0
+#define NDEBUG
+#endif
 
 const int POISON_NUMBER      = INT_MAX / 10;
 const int AMOUNT_ERROR_TYPES = 8;
 
-#ifdef DEBUG
+#if DEBUG_LEVEL > 1
 const size_t CANARY_PROTECTION_SIZE    = 2;
 const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
@@ -63,11 +66,14 @@ stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
 static void InitializeStackBuffer(stack* stk, size_t startStackInd);
 
-#ifdef DEBUG
+#if DEBUG_LEVEL > 0
 static void stackDump(stack* stk, const char* function, const char* file, const int line);
 static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
-static void setCanaryProtection(stack* stk);
 static void assignErrorStruct(stack* stk, stackErr type);
+#endif /* DEBUG */
+
+#if DEBUG_LEVEL > 1
+static void setCanaryProtection(stack* stk);
 static stackErr canaryCheck(stack* stk);
 #endif /* DEBUG */
 
@@ -76,7 +82,7 @@ stackErr stackCtor(stack* stk, size_t capacity){
     assert(capacity > 0);
     assert(capacity < (size_t) 1e9);
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 1
         stk->capacity = capacity + CANARY_PROTECTION_SIZE;
     #else 
         stk->capacity = capacity;
@@ -87,8 +93,11 @@ stackErr stackCtor(stack* stk, size_t capacity){
 
     InitializeStackBuffer(stk, 0);
     
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 1
     setCanaryProtection(stk);
+    #endif
+
+    #if DEBUG_LEVEL > 0
     verify
     #endif /* DEBUG */
 
@@ -97,16 +106,16 @@ stackErr stackCtor(stack* stk, size_t capacity){
 
 stackErr stackPush(stack* stk, stack_t value){
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 0
     verify
     #endif /* DEBUG */
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 1
     if(stk->size == stk->capacity - CANARY_PROTECTION_SIZE){
     #else   
     if(stk->size == stk->capacity){
     #endif
-        #ifdef DEBUG
+        #if DEBUG_LEVEL > 0
         verify
         #endif /* DEBUG */
 
@@ -118,16 +127,16 @@ stackErr stackPush(stack* stk, stack_t value){
 
         InitializeStackBuffer(stk, stk->size + 1);
 
-        #ifdef DEBUG
+        #if DEBUG_LEVEL > 1
         setCanaryProtection(stk);
         #endif /* DEBUG */
     }
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL
     verify
     #endif /* DEBUG */
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 1
     stk->data[stk->size + (CANARY_PROTECTION_SIZE / 2)] = value;
     #else
     stk->data[stk->size] = value;
@@ -135,7 +144,7 @@ stackErr stackPush(stack* stk, stack_t value){
 
     (stk->size)++;
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 0
     verify
     #endif /* DEBUG */
 
@@ -145,11 +154,11 @@ stackErr stackPush(stack* stk, stack_t value){
 stackErr stackPop(stack* stk, stack_t* stackElem){
     assert(stackElem);
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 0
     verify
     #endif /* DEBUG */
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 1 
     if(stk->data[stk->size] == CANARY_PROTECTION_NUMBER){
         return POP_WITH_BAD_SIZE;
     }
@@ -165,7 +174,7 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
 
     (stk->size)--;
 
-    #ifdef DEBUG
+    #if DEBUG_LEVEL > 0
     verify
     #endif /* DEBUG */
     
@@ -180,7 +189,7 @@ static void InitializeStackBuffer(stack* stk, size_t startStackInd){
     }
 }
 
-#ifdef DEBUG
+#if DEBUG_LEVEL > 0
 
 static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
@@ -203,7 +212,9 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
         else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
             assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
         }
+        #if DEBUG_LEVEL > 1
         else if(canaryCheck(stk) != PROCESS_OK);
+        #endif
         else{
             assignErrorStruct(stk, PROCESS_OK);
         }
@@ -253,9 +264,11 @@ void static stackDump(stack* stk, const char* function, const char* file, const 
         if(stk->data[curElemInd] == POISON_NUMBER) {
             printf("\t\t[%lu] = %d" SET_STYLE_FONT_RED" (POISON NUMBER)\n"RESET, curElemInd, stk->data[curElemInd]);
         }
+        #if DEBUG_LEVEL > 1
         else if(stk->data[curElemInd] == CANARY_PROTECTION_NUMBER){
             printf("\t\t[%lu] = %d" SET_STYLE_FONT_YELLOW" (CANARY NUMBER)\n"RESET, curElemInd, stk->data[curElemInd]);
         }
+        #endif
         else{
             printf("\t\t*[%lu] = %d\n", curElemInd, stk->data[curElemInd]);
         }
@@ -264,7 +277,9 @@ void static stackDump(stack* stk, const char* function, const char* file, const 
     printf("}\n");
     
 }
+#endif /* DEBUG */
 
+#if DEBUG_LEVEL > 1
 static void setCanaryProtection(stack* stk){
     assert(stk);
 
@@ -283,7 +298,6 @@ static stackErr canaryCheck(stack* stk){
 
     return PROCESS_OK;
 }
-
 #endif /* DEBUG */
 
 #endif /* STACK_H */
