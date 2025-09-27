@@ -4,11 +4,18 @@
 #include <stdio.h>
 #include <assert.h>
 #include <malloc.h>
+#include <limits.h>
 
 #include "consoleColors.h"
 
+#define DEBUG
+
 const int POISON_NUMBER = 0;
 const int AMOUNT_ERROR_TYPES = 6;
+
+#ifdef DEBUG
+const stack_t CANARY_PROTECTION_SIZE = 2;
+#endif /* DEBUG */
 
 /// для использования в функциях этого файла
 #define verify if(verifyStack(stk, __FUNCTION__, __FILE__, __LINE__)!=PROCESS_OK)return stk->error.type;
@@ -48,30 +55,49 @@ struct errorDescription errors[AMOUNT_ERROR_TYPES]{
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
+
+#ifdef DEBUG
 void stackDump(stack* stk, const char* function, const char* file, const int line);
 stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
-
 static void assignErrorStruct(stack* stk, stackErr type);
+#endif /* DEBUG */
 
 stackErr stackCtor(stack* stk, size_t capacity){
     assert(stk);
     assert(capacity > 0);
+    assert(capacity < (size_t) 1e9);
 
-    stk->capacity = capacity;
+    #ifdef DEBUG
+        stk->capacity = capacity + CANARY_PROTECTION_SIZE;
+    #else 
+        stk->capacity = capacity;
+    #endif /* DEBUG */
 
     stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
 
+    #ifdef DEBUG
     verify
-    
+    #endif /* DEBUG */
+
     return PROCESS_OK;
 }
 
 stackErr stackPush(stack* stk, stack_t value){
-    verify
 
+    #ifdef DEBUG
+    verify
+    #endif /* DEBUG */
+
+    #ifdef DEBUG
+    if(stk->size == stk->capacity - CANARY_PROTECTION_SIZE){
+    #else   
     if(stk->size == stk->capacity){
+    #endif
+        #ifdef DEBUG
         verify
+        #endif /* DEBUG */
+
         stk->capacity = (stk->capacity) * 2;
         stack_t* temp = (stack_t*) realloc(stk->data, (stk->capacity) * sizeof(stack_t));
         assert(temp);
@@ -79,12 +105,21 @@ stackErr stackPush(stack* stk, stack_t value){
         stk->data = temp;
     }
 
+    #ifdef DEBUG
     verify
+    #endif /* DEBUG */
 
+    #ifdef DEBUG
+    stk->data[stk->size + (CANARY_PROTECTION_SIZE / 2)] = value;
+    #else
     stk->data[stk->size] = value;
+    #endif
+
     (stk->size)++;
-    
+
+    #ifdef DEBUG
     verify
+    #endif /* DEBUG */
 
     return PROCESS_OK;
 }
@@ -92,17 +127,28 @@ stackErr stackPush(stack* stk, stack_t value){
 stackErr stackPop(stack* stk, stack_t* stackElem){
     assert(stackElem);
 
+    #ifdef DEBUG
     verify
+    #endif /* DEBUG */
 
+    #ifdef DEBUG
+    *stackElem = stk->data[stk->size];
+    stk->data[stk->size] = POISON_NUMBER;
+    #else
     *stackElem = stk->data[stk->size - 1];
     stk->data[stk->size - 1] = POISON_NUMBER;
+    #endif
+
     (stk->size)--;
 
+    #ifdef DEBUG
     verify
-
+    #endif /* DEBUG */
+    
     return PROCESS_OK;
 }
 
+#ifdef DEBUG
 void stackDump(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
         printf("Передача нулевого указателя недопустима\n");                                                                                                                                            printf ("MEOW \a\a\a\a\a\a");
@@ -141,6 +187,7 @@ void stackDump(stack* stk, const char* function, const char* file, const int lin
     
 }
 
+
 stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
 
     if(stk == NULL){
@@ -174,6 +221,7 @@ stackErr verifyStack(stack* stk, const char* function, const char* file, const i
     return stk->error.type;
 }
 
+
 static void assignErrorStruct(stack* stk, stackErr type){
     assert(stk);
 
@@ -184,7 +232,6 @@ static void assignErrorStruct(stack* stk, stackErr type){
     }
 }
 
-
-
+#endif /* DEBUG */
 
 #endif /* STACK_H */
