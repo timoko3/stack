@@ -64,6 +64,9 @@ struct stack{
     size_t size;
     size_t capacity;
     errorDescription error;
+    #if DEBUG_LEVEL > 1
+    bool canaryStatus = false;
+    #endif
     #if DEBUG_LEVEL > 2
     unsigned long hash;
     #endif
@@ -110,6 +113,10 @@ stackErr stackCtor(stack* stk, size_t capacity){
 
     stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
+    
+    #if DEBUG_LEVEL > 0
+    verify
+    #endif /* DEBUG */
 
     InitializeStackBuffer(stk, 0);
     
@@ -149,6 +156,10 @@ stackErr stackPush(stack* stk, stack_t value){
 
         stk->data = temp;
 
+        #if DEBUG_LEVEL > 0
+        verify
+        #endif /* DEBUG */
+        
         InitializeStackBuffer(stk, stk->size + 1);
 
         #if DEBUG_LEVEL > 1
@@ -158,7 +169,6 @@ stackErr stackPush(stack* stk, stack_t value){
 
     #if DEBUG_LEVEL > 0
     verify
-    printf("VERIFY 156 PASSED");
     #endif /* DEBUG */
 
     #if DEBUG_LEVEL > 1
@@ -264,7 +274,7 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
         }
 
         #if DEBUG_LEVEL > 1
-        else if(canaryCheck(stk) != PROCESS_OK);
+        else if(canaryCheck(stk) != PROCESS_OK && stk->canaryStatus == true);
         #endif
 
         #if DEBUG_LEVEL > 2
@@ -273,6 +283,7 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
 
         else{
             assignErrorStruct(stk, PROCESS_OK);
+            // return PROCESS_OK;
         }
     }
     
@@ -298,22 +309,31 @@ void static stackDump(stack* stk, const char* function, const char* file, const 
     }
     
     if(stk->error.type == PROCESS_OK){
-        printf(SET_STYLE_FONT_GREEN"OK\n"RESET);
+        printf(SET_STYLE_FONT_GREEN"\nOK\n"RESET);
     }
     else{
-        printf(SET_STYLE_FONT_RED"ERROR: %s\n"RESET, stk->error.text);
+        printf(SET_STYLE_FONT_RED"\nERROR: %s\n"RESET, stk->error.text);
     }
 
     printf("%s()\n", __FUNCTION__);
     printf("stack<int>[%p]\n", stk);
 
-    printf("Called from function %s at file %s:line %d\n", function, file, line);
+    printf("Called from function %s at file %s:" SET_STYLE_BOLD_FONT_PURPLE " line %d\n" RESET, function, file, line);
 
     printf("{\n");
-    printf("\tsize = %lu\n", stk->size);
-    printf("\tcapacity = %lu\n\n", stk->capacity);
-    printf("\tНеобходимый размер блока data: %lu байт(-ов)\n", sizeof(stack_t) * stk->capacity);
-    printf("\tРазмер выделенного блока data: %lu байт(-ов)\n", malloc_usable_size(stk->data));
+    printf(SET_STYLE_BOLD_FONT_BLUE "\tsize = %lu\n" RESET, stk->size);
+    printf(SET_STYLE_BOLD_FONT_BLUE "\tcapacity = %lu\n\n" RESET, stk->capacity);
+
+    if(sizeof(stack_t) * stk->capacity == malloc_usable_size(stk->data)){
+        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stack_t) * stk->capacity);
+        printf(SET_STYLE_BOLD_FONT_GREEN "\tРазмер выделенного блока data: %lu байт(-ов)\n" RESET, malloc_usable_size(stk->data));
+    }
+    else{
+        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stack_t) * stk->capacity);
+        printf( SET_STYLE_BOLD_FONT_RED"\tРазмер выделенного блока data:"RESET 
+                SET_STYLE_BLINKING_FONT_RED" %lu байт(-ов)\n" RESET, malloc_usable_size(stk->data));
+    }
+
     printf("\tdata[%p]\n", stk->data);
     printf("\t{\n");
     for(size_t curElemInd = 0; curElemInd < stk->capacity; curElemInd++){
@@ -340,6 +360,8 @@ static void setCanaryProtection(stack* stk){
 
     stk->data[0] = CANARY_PROTECTION_NUMBER;
     stk->data[stk->capacity - 1] = CANARY_PROTECTION_NUMBER;
+
+    stk->canaryStatus = true;
 
     #if DEBUG_LEVEL > 2
     stk->hash = genHash(stk);
