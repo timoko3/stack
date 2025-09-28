@@ -3,8 +3,6 @@
 #include "workWIthFiles.h"
 #include "stack.h"
 
-// #define DEBUG
-
 const int nCommands = 5;
 
 typedef bool (*command)(stack*);
@@ -34,8 +32,6 @@ static bool completeCommand(char* curCommand, stack* stk, string* comandBuffer);
 
 void calculator(stack* stk){
     assert(stk);
-
-    stackCtor(stk, 10);
 
     DataFromInputFIle calcCommands;
     stringsFromFileToStructure(&calcCommands);
@@ -104,7 +100,7 @@ bool add(stack* stk){
     stackPop(stk, &term1);
     stackPop(stk, &term2);
     stackPush(stk, term1 + term2);
-
+    
     return true;
 }
 
@@ -145,7 +141,6 @@ bool div(stack* stk){
         stackPop(stk, &dividend);
         return false;
     }
-
     stackPush(stk, dividend / divider);
 
     return true;
@@ -155,6 +150,9 @@ bool out(stack* stk){
     stack_t curElem = 0;
     printf("Все элементы стека:\n");
     while(stackPop(stk, &curElem) != POP_WITH_BAD_SIZE){
+        if(stk->error.type != PROCESS_OK){
+            break;
+        }
         printf("%d ", curElem);
     }
     printf("\n");

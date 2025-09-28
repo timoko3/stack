@@ -5,26 +5,30 @@
 #include <assert.h>
 #include <malloc.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "consoleColors.h"
 
-#define DEBUG_LEVEL 0 
+#define DEBUG_LEVEL 2
 
 #if DEBUG_LEVEL == 0
 #define NDEBUG
 #endif
 
 const int POISON_NUMBER      = INT_MAX / 10;
-const int AMOUNT_ERROR_TYPES = 8;
+const int AMOUNT_ERROR_TYPES = 9;
 
 #if DEBUG_LEVEL > 1
 const size_t CANARY_PROTECTION_SIZE    = 2;
 const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
-/// для использования в функциях этого файла
+#if DEBUG_LEVEL > 0
+
 #define verify if(verifyStack(stk, __FUNCTION__, __FILE__, __LINE__)!=PROCESS_OK)return stk->error.type;
 #define dump(stk) stackDump(stk, function, file, line);
+
+#endif /* DEBUG */
 
 enum stackErr{
     BAD_CAPACITY,
@@ -34,6 +38,7 @@ enum stackErr{
     SIZE_EXCEEDS_CAPACITY,
     CANARY_TORTURE,
     POP_WITH_BAD_SIZE,
+    UNPLANNED_STACK_CHANGE,
     PROCESS_OK
 };
 
@@ -50,6 +55,7 @@ struct errorDescription errors[AMOUNT_ERROR_TYPES]{
     {SIZE_EXCEEDS_CAPACITY, "Превышения размером вместимоcти недопустимо\n"},
     {CANARY_TORTURE, "Канарейка была замучена до смерти\n"},
     {POP_WITH_BAD_SIZE, "Попытка достать элемент из недопустимой области\n"},
+    {UNPLANNED_STACK_CHANGE, "Стек незапланировано изменен\n"},
     {PROCESS_OK, "Все хорошо\n"}
 };
 
@@ -58,23 +64,37 @@ struct stack{
     size_t size;
     size_t capacity;
     errorDescription error;
+    #if DEBUG_LEVEL > 2
+    unsigned long hash;
+    #endif
 };
-
 
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
+stackErr stackDtor(stack* stk);
 static void InitializeStackBuffer(stack* stk, size_t startStackInd);
 
 #if DEBUG_LEVEL > 0
+
 static void stackDump(stack* stk, const char* function, const char* file, const int line);
 static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
 static void assignErrorStruct(stack* stk, stackErr type);
+
 #endif /* DEBUG */
 
 #if DEBUG_LEVEL > 1
+
 static void setCanaryProtection(stack* stk);
 static stackErr canaryCheck(stack* stk);
+
+#endif /* DEBUG */
+
+#if DEBUG_LEVEL > 2
+
+unsigned long genHash(stack* stk);
+static stackErr hashCheck(stack* stk);
+
 #endif /* DEBUG */
 
 stackErr stackCtor(stack* stk, size_t capacity){
@@ -93,6 +113,10 @@ stackErr stackCtor(stack* stk, size_t capacity){
 
     InitializeStackBuffer(stk, 0);
     
+    #if DEBUG_LEVEL == 0
+    stk->error = errors[AMOUNT_ERROR_TYPES - 1];
+    #endif
+
     #if DEBUG_LEVEL > 1
     setCanaryProtection(stk);
     #endif
@@ -132,14 +156,19 @@ stackErr stackPush(stack* stk, stack_t value){
         #endif /* DEBUG */
     }
 
-    #if DEBUG_LEVEL
+    #if DEBUG_LEVEL > 0
     verify
+    printf("VERIFY 156 PASSED");
     #endif /* DEBUG */
 
     #if DEBUG_LEVEL > 1
     stk->data[stk->size + (CANARY_PROTECTION_SIZE / 2)] = value;
     #else
     stk->data[stk->size] = value;
+    #endif
+
+    #if DEBUG_LEVEL > 2
+    stk->hash = genHash(stk);
     #endif
 
     (stk->size)++;
@@ -165,12 +194,17 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     *stackElem = stk->data[stk->size];
     stk->data[stk->size] = POISON_NUMBER;
     #else
+
     if(stk->size <= 0){
         return POP_WITH_BAD_SIZE;
     }
     *stackElem = stk->data[stk->size - 1];
     stk->data[stk->size - 1] = POISON_NUMBER;
     #endif
+
+    #if DEBUG_LEVEL > 2
+        stk->hash = genHash(stk);
+    #endif /* DEBUG */
 
     (stk->size)--;
 
@@ -181,12 +215,28 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     return PROCESS_OK;
 }
 
+stackErr stackDtor(stack* stk){
+    assert(stk);
+    
+    for(size_t curElemInd = 0; curElemInd < stk->size; curElemInd++){
+        stk->data[curElemInd] = rand();           
+    }
+
+    free(stk->data);
+
+    return PROCESS_OK;
+}
+
 static void InitializeStackBuffer(stack* stk, size_t startStackInd){
     assert(stk);
 
     for(size_t curStackElem = startStackInd; curStackElem < stk->capacity; curStackElem++){
         stk->data[curStackElem] = POISON_NUMBER;
     }
+
+    #if DEBUG_LEVEL > 2
+    stk->hash = genHash(stk);
+    #endif
 }
 
 #if DEBUG_LEVEL > 0
@@ -212,14 +262,20 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
         else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
             assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
         }
+
         #if DEBUG_LEVEL > 1
         else if(canaryCheck(stk) != PROCESS_OK);
         #endif
+
+        #if DEBUG_LEVEL > 2
+        else if(hashCheck(stk) != PROCESS_OK);
+        #endif
+
         else{
             assignErrorStruct(stk, PROCESS_OK);
         }
     }
-
+    
     dump(stk);
     return stk->error.type;
 }
@@ -275,7 +331,6 @@ void static stackDump(stack* stk, const char* function, const char* file, const 
     }
     printf("\t}\n");
     printf("}\n");
-    
 }
 #endif /* DEBUG */
 
@@ -286,18 +341,55 @@ static void setCanaryProtection(stack* stk){
     stk->data[0] = CANARY_PROTECTION_NUMBER;
     stk->data[stk->capacity - 1] = CANARY_PROTECTION_NUMBER;
 
+    #if DEBUG_LEVEL > 2
+    stk->hash = genHash(stk);
+    #endif
 }
 
 static stackErr canaryCheck(stack* stk){
     assert(stk);
-    if((stk->data[0] != CANARY_PROTECTION_NUMBER) || (stk->data[stk->capacity - CANARY_PROTECTION_SIZE / 2] != CANARY_PROTECTION_NUMBER)){
 
+    if((stk->data[0] != CANARY_PROTECTION_NUMBER) || (stk->data[stk->capacity - CANARY_PROTECTION_SIZE / 2] != CANARY_PROTECTION_NUMBER)){
         assignErrorStruct(stk, CANARY_TORTURE);
         return CANARY_TORTURE;
     }
 
     return PROCESS_OK;
 }
+#endif /* DEBUG */
+
+#if DEBUG_LEVEL > 2
+
+unsigned long genHash(stack* stk){
+    assert(stk);
+
+    unsigned long hash = 5381;
+
+    size_t curElemInd = 0;
+    while(curElemInd < stk->capacity){
+        hash = ((hash << 5) + hash) + (unsigned long) stk->data[curElemInd];
+        curElemInd++;
+    }
+
+    #if DEBUG_LEVEL > 3
+    printf("CurHash: %lu\n", hash);
+    #endif /* DEBUG */
+
+    return hash;
+}
+
+static stackErr hashCheck(stack* stk){
+    assert(stk);
+    if(stk->hash != genHash(stk)){
+        assignErrorStruct(stk, UNPLANNED_STACK_CHANGE);
+        return UNPLANNED_STACK_CHANGE;
+    }
+
+    return PROCESS_OK;
+}
+
+
+
 #endif /* DEBUG */
 
 #endif /* STACK_H */

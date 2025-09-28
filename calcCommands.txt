@@ -1,6 +1,7 @@
 PUSH 1000
 PUSH 17
 MUL
-push 100000000000000
-DIV
+push 10
+push 20
+push 30
 OUT

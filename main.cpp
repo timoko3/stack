@@ -10,6 +10,8 @@ typedef int stack_t;
 
 int main(void){
     stack stk1 = {0};
+    stackCtor(&stk1, 10);
+
     calculator(&stk1);
     
     // #ifdef DEBUG
@@ -27,7 +29,7 @@ int main(void){
     // printf("Элемент стека — %d\n", stackElem);
     // #endif
 
-    free(stk1.data);
+    stackDtor(&stk1);
 
     return 0;
 }
