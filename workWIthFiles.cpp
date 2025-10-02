@@ -32,11 +32,12 @@ int stringsFromFileToStructure(DataFromInputFIle* DataFromInputFIle){
     
     DataFromInputFIle->strings = divideBufferToStruct(DataFromInputFIle->buffer, DataFromInputFIle->nStrings);
     assert(DataFromInputFIle->strings);
+
     return 0;
 }
 
 static size_t getFileSize(){
-    struct stat file_info = {}  ;
+    struct stat file_info = {};
 
     if(stat(INPUT_FILE_NAME, &file_info) != 0){
         fprintf(stderr, ALERT_GET_INFO_FAILURE);
@@ -76,6 +77,7 @@ static char* getTextToBuffer(FILE* inputFIle, int fileSize, int* nStrings){
 
 static string* divideBufferToStruct(char* buffer, int nStrings){
     assert(buffer);
+    
     string* strings = (string*) calloc(nStrings, sizeof(string));
     assert(strings);
 

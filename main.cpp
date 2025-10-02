@@ -1,18 +1,18 @@
-typedef int stack_t;
-
-#include "stack.h"
 #include "calc.h"
 
 #define stackCtor(stk, capacity) if(stackCtor(stk, capacity) != PROCESS_OK) return stk1.error.type
-#define stackPush(stk, value)    if(stackPush(stk, value) != PROCESS_OK) return stk1.error.type
-#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem) != PROCESS_OK) return stk1.error.type
-
+#define stackPush(stk, value)    if(stackPush(stk, value)    != PROCESS_OK) return stk1.error.type
+#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem)   != PROCESS_OK) return stk1.error.type
 
 int main(void){
     stack stk1 = {0};
     stackCtor(&stk1, 10);
 
-    calculator(&stk1);
+    stackPush(&stk1, 5);
+    // stk1.error = 2;
+    stackPush(&stk1, 7);
+
+    // calculator(&stk1);
     
     // #ifdef DEBUG
     // size_t capacity = 10;
@@ -30,6 +30,7 @@ int main(void){
     // #endif
 
     stackDtor(&stk1);
+    // free(stk1.data);
 
     return 0;
 }
