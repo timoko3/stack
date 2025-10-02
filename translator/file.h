@@ -20,7 +20,6 @@ const char* const OPEN_INPUT_FILE_ERROR_DESCRIPTION     = "openInputFile() faile
 const char* const FAILURE_STRINGS_FROM_FILE_TO_STRUCT   = "stringsFromFileToStructure() failed";
 const char* const OPEN_BITE_CODE_FILE_ERROR_DESCRIPTION = "openBiteCodeFile() failed";
 
-
 struct DataFromInputFIle {
     size_t fileSize;
     FILE* inputFile;
@@ -30,10 +29,8 @@ struct DataFromInputFIle {
     string* strings;
 };
 
-
 int stringsFromFileToStructure(DataFromInputFIle* DataFromInputFIle);
 
 FILE* openBiteCodeFile();
-
 
 #endif /*FILE_PARSE_H*/

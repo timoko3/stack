@@ -1,1 +1,1 @@
-g++ translator.cpp workWIthFiles.cpp strFunc.cpp -o translator.out
+g++ main.cpp file.cpp strFunc.cpp -o translator.out

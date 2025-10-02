@@ -1,4 +1,4 @@
-#include "workWIthFiles.h"
+#include "file.h"
 
 // #define DEBUG
 
@@ -39,7 +39,7 @@ int stringsFromFileToStructure(DataFromInputFIle* DataFromInputFIle){
 FILE* openBiteCodeFile(){
     FILE* biteCodeFile = NULL;
 
-    if(!(biteCodeFile = fopen(BITE_CODE_FILE_NAME, "w"))){
+    if(!(biteCodeFile = fopen(BITE_CODE_FILE_NAME, "wb"))){
         fprintf(stderr, ALERT_BITE_CODE_FILE_OPEN_FAILURE);
         perror(OPEN_BITE_CODE_FILE_ERROR_DESCRIPTION);
         return NULL;

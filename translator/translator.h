@@ -8,7 +8,7 @@ const char* const  BITE_CODE_FILE_NAME = "biteCode.asm";
 const int ASSEMBLE_FAILURE = -1;
 
 enum spu_commands_codes{
-    PUSH,
+    PUSH = 1,
     ADD,
     SUB,
     MUL,
@@ -22,8 +22,5 @@ struct spu_command{
 };
 
 const size_t N_SPU_COMMANDS = 6;
-
-
-int assemble(char* curCommand);
 
 #endif /* TRANSLATOR_H */
