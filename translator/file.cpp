@@ -75,7 +75,7 @@ static FILE* openInputFile(){
 static char* getTextToBuffer(FILE* inputFIle, int fileSize, int* nStrings){
     assert(inputFIle);
     assert(nStrings);
-
+    
     char* buffer = (char*) calloc(fileSize + SIZE_OF_END_STR, sizeof(char)); 
     assert(buffer);
     buffer[fileSize] = '\n';
@@ -102,6 +102,9 @@ static string* divideBufferToStruct(char* buffer, int nStrings){
     int curStr = 1;
     int curSym = 0;
     for(curSym = 0; buffer[curSym] != '\0'; curSym++){
+        fprintf(stderr, "curSym = %d\n", curSym);
+        fprintf(stderr, "buffer[curSym] = %d\n", buffer[curSym]);
+        fprintf(stderr, "buffer[curSym + 1] = %d\n", buffer[curSym + 1]);
         if((buffer[curSym] == END_STR) && (buffer[curSym + 1] != '\0')){
             strings[curStr].stringPtr = buffer + curSym + 1;
             strings[curStr - 1].len = strings[curStr].stringPtr - 
