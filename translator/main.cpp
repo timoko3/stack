@@ -17,7 +17,7 @@ spu_command spu_commands[N_SPU_COMMANDS] = {
 };
 
 /// Нельзя убирать
-#define DEBUG 1
+#define DEBUG 0
 
 #define ON_DEBUG(expression) if(DEBUG){expression};
 
@@ -66,7 +66,6 @@ static int* createBiteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curBit
         (*curBiteBufferSize)++;
 
         if(!strCmpSpuCom4(spu_commands[0].name, curCommand)){
-            ON_DEBUG(printf("MEOW\n");)
             int pushParameter = 0;
 
             sscanf(calcCommands->strings[curString].stringPtr, "%*s %d", &pushParameter);
@@ -75,6 +74,9 @@ static int* createBiteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curBit
             ON_DEBUG(printf("biteCodeBuffer now: %d\n", biteCodeBuffer[*curBiteBufferSize]);)
             (*curBiteBufferSize)++;
         }
+
+        
+
         ON_DEBUG(printf("\n");)
         
     }

@@ -174,8 +174,8 @@ stackErr stackDtor(stack* stk){
     for(size_t curElemInd = 0; curElemInd < stk->size; curElemInd++){
         stk->data[curElemInd] = rand();           
     }
-    stk->size = rand();
-    stk->capacity = rand();
+    stk->size = (size_t) rand();
+    stk->capacity = (size_t) rand();
     litterMemory(&stk->error, sizeof(stk->error));
 
     #if DEBUG_LEVEL > 1

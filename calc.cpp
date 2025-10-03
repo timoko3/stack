@@ -1,54 +1,63 @@
 #include "calc.h"
 
-commandDescription comands[nCommands]{
+calcCommandsDescription calcCommands[N_CALC_COMMANDS]{
     {ADD, add},
     {SUB, sub},
     {MUL, mul},
     {DIV, div},
     {OUT, out}
-};
+}; 
+
+// registerCommandsDescription registerCommands[N_REGISTER_COMMANDS]{
+//     {PUSHREG, pushreg},
+//     {POPREG, popreg}
+// };
 
 void calculator(stack* stk){
     assert(stk);
 
+    processor spu1 = {0};
+    int regs[10];
+
     size_t sizeBiteCode = getFileSize(BITE_CODE_FILE_NAME);
     int* biteCode = (int*) calloc(1, sizeBiteCode);
-
-    FILE* biteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
-
-    fread(biteCode, 1, sizeBiteCode, biteCodeFile);
-    
-    // printf("Объем выделенной памяти: %d\n", malloc_usable_size(biteCode));
     assert(biteCode);
 
-    size_t curBiteCodeArrInd = 0;
-    while(curBiteCodeArrInd < (sizeBiteCode / sizeof(int))){
-        completeCommand(biteCode, &curBiteCodeArrInd, stk);
-        curBiteCodeArrInd++;
+    FILE* biteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
+    assert(biteCodeFile);
+
+    fread(biteCode, 1, sizeBiteCode, biteCodeFile);
+
+    spu1.biteCode = biteCode;
+    spu1.stk = *stk;
+    spu1.pc = 0;
+
+    while(spu1.pc < (sizeBiteCode / sizeof(int))){
+        completeCommand(&spu1);
+        spu1.pc++;
     }
 
+    fclose(biteCodeFile);
     free(biteCode);
 }
 
-bool completeCommand(int* biteCode, size_t* curBiteCodeArrInd, stack* stk){
-    assert(biteCode);
-    assert(stk);
+bool completeCommand(processor* spu){
+    assert(spu);
 
     bool result = false;
 
-    // printf("biteCode[*curBiteCodeArr] = %d; PUSH = %d\n", biteCode[*curBiteCodeArrInd], PUSH);
-    if(biteCode[*curBiteCodeArrInd] == PUSH){
-        stack_t pushParameter = biteCode[*curBiteCodeArrInd + 1];
-        stackPush(stk, pushParameter);
+    if(spu->biteCode[spu->pc] == PUSH){
+        stack_t pushParameter = spu->biteCode[spu->pc + 1];
+        stackPush(&(spu->stk), pushParameter);
 
-        (*curBiteCodeArrInd)++;
+        (spu->pc)++;
         return true;
     }
 
-    for(size_t curCommandInd = 0; curCommandInd < nCommands; curCommandInd++){
-        if(comands[curCommandInd].code == biteCode[*curBiteCodeArrInd]){
-            comands[curCommandInd].function(stk);
-
+    for(size_t curCommandInd = 0; curCommandInd < N_CALC_COMMANDS; curCommandInd++){
+        if(calcCommands[curCommandInd].code == spu->biteCode[spu->pc]){
+            calcCommands[curCommandInd].function(&spu->stk);
+            
             result = true;
             break;
         }
@@ -118,9 +127,18 @@ bool out(stack* stk){
         if(stk->error.type != PROCESS_OK){
             break;
         }
+
         printf("%d ", curElem);
     }
     printf("\n");
 
     return true;
+}
+
+bool pushreg(processor* spu){
+   return true; 
+}
+
+bool popreg(processor* spu){
+   return true; 
 }

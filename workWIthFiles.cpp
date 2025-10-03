@@ -13,7 +13,7 @@ size_t getFileSize(const char* fileName){
         return EXIT_FAILURE;
     }
 
-    return file_info.st_size;
+    return (size_t) file_info.st_size;
 }
 
 FILE* openInputFile(const char* fileName){
