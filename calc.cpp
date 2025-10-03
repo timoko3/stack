@@ -1,59 +1,53 @@
 #include "calc.h"
 
 commandDescription comands[nCommands]{
-    {"ADD", add},
-    {"SUB", sub},
-    {"MUL", mul},
-    {"DIV", div},
-    {"OUT", out}
+    {ADD, add},
+    {SUB, sub},
+    {MUL, mul},
+    {DIV, div},
+    {OUT, out}
 };
 
 void calculator(stack* stk){
     assert(stk);
 
-    DataFromInputFIle calcCommands;
-    stringsFromFileToStructure(&calcCommands);
+    size_t sizeBiteCode = getFileSize(BITE_CODE_FILE_NAME);
+    int* biteCode = (int*) calloc(1, sizeBiteCode);
 
-    for(int curString = 0; curString < calcCommands.nStrings; curString++){
-        char curCommand[20] = {0};
-        sscanf(calcCommands.strings[curString].stringPtr, "%s", curCommand);
+    FILE* biteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
 
-        #ifdef DEBUG
-        printf("%d команда: %s\n",curString, curCommand);
-        #endif /* DEBUG */
+    fread(biteCode, 1, sizeBiteCode, biteCodeFile);
+    
+    // printf("Объем выделенной памяти: %d\n", malloc_usable_size(biteCode));
+    assert(biteCode);
 
-        completeCommand(curCommand, stk, &calcCommands.strings[curString]);
+    size_t curBiteCodeArrInd = 0;
+    while(curBiteCodeArrInd < (sizeBiteCode / sizeof(int))){
+        completeCommand(biteCode, &curBiteCodeArrInd, stk);
+        curBiteCodeArrInd++;
     }
 
-    free(calcCommands.buffer);
-    free(calcCommands.strings);
+    free(biteCode);
 }
 
-static bool completeCommand(char* curCommand, stack* stk, string* commandBuffer){
-    assert(curCommand);
+bool completeCommand(int* biteCode, size_t* curBiteCodeArrInd, stack* stk){
+    assert(biteCode);
+    assert(stk);
 
     bool result = false;
 
-    #ifdef DEBUG
-    for(size_t i = 0; i < myStrLen(curCommand, '\0'); i++){
-        printf("%ld символ - %d\n", i, curCommand[i]);
-    }
-    #endif /* DEBUG */
-
-    if(!myStrCmpFromBegin("PUSH", curCommand)){
-        stack_t pushParameter = 0;
-        sscanf(commandBuffer->stringPtr, "%*s %d", &pushParameter);
-
+    // printf("biteCode[*curBiteCodeArr] = %d; PUSH = %d\n", biteCode[*curBiteCodeArrInd], PUSH);
+    if(biteCode[*curBiteCodeArrInd] == PUSH){
+        stack_t pushParameter = biteCode[*curBiteCodeArrInd + 1];
         stackPush(stk, pushParameter);
+
+        (*curBiteCodeArrInd)++;
+        return true;
     }
 
     for(size_t curCommandInd = 0; curCommandInd < nCommands; curCommandInd++){
-        if(!myStrCmpFromBegin(comands[curCommandInd].name, curCommand)){
+        if(comands[curCommandInd].code == biteCode[*curBiteCodeArrInd]){
             comands[curCommandInd].function(stk);
-
-            #ifdef DEBUG
-            printf("Сработала команда %s\n", comands[curCommandInd].name);
-            #endif /* DEBUG */
 
             result = true;
             break;
@@ -120,7 +114,7 @@ bool out(stack* stk){
     printf("Все элементы стека:\n");
 
     stack_t curElem = 0;
-    while(stackPop(stk, &curElem) != POP_WITH_BAD_SIZE){
+    while(stackPop(stk, &curElem) != EMPTY_STACK){
         if(stk->error.type != PROCESS_OK){
             break;
         }

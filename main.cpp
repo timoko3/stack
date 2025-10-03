@@ -6,13 +6,10 @@
 
 int main(void){
     stack stk1 = {0};
+
     stackCtor(&stk1, 10);
-
-    stackPush(&stk1, 5);
     // stk1.error = 2;
-    stackPush(&stk1, 7);
-
-    // calculator(&stk1);
+    calculator(&stk1);
     
     // #ifdef DEBUG
     // size_t capacity = 10;
@@ -31,6 +28,7 @@ int main(void){
 
     stackDtor(&stk1);
     // free(stk1.data);
+
 
     return 0;
 }

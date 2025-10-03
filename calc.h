@@ -5,6 +5,7 @@
 
 #include "workWIthFiles.h"
 #include "stack.h"
+#include "translator/translator.h"
 
 const int nCommands = 5;
 
@@ -17,11 +18,11 @@ bool div(stack* stk);
 bool out(stack* stk);
 
 struct commandDescription{
-    const char* name;
+    spu_commands_codes code;
     command function;
 };
 
 void calculator(stack* stk);
-static bool completeCommand(char* curCommand, stack* stk, string* comandBuffer);
+bool completeCommand(int* biteCode, size_t* curBiteCodeArrInd, stack* stk);
 
 #endif /* CALC_H */

@@ -10,7 +10,7 @@
 #include "consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 0
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0
@@ -23,7 +23,7 @@ const int POISON_NUMBER = INT_MAX / 10;
 const size_t STACK_MAX_CAPACITY = 1e9;
 
 #if DEBUG_LEVEL > 1
-const size_t CANARY_PROTECTION_SIZE    = 4; /// 
+const size_t CANARY_PROTECTION_SIZE    = 1; /// 
 const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
@@ -41,7 +41,7 @@ enum stackErr{
     BAD_MEMORY_ALLOCATION,
     SIZE_EXCEEDS_CAPACITY,
     CANARY_TORTURE,
-    POP_WITH_BAD_SIZE,
+    EMPTY_STACK,
     UNPLANNED_STACK_CHANGE,
     PROCESS_OK
 };
@@ -53,6 +53,7 @@ struct errorDescription{
 
 const int AMOUNT_ERROR_TYPES = 9;
 
+// #pragma pack(push, 1)
 struct stack{
     stack_t* data;
     size_t size;
@@ -65,10 +66,12 @@ struct stack{
     unsigned long hash;
     #endif
 };
+// #pragma pack(pop)
 
 stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
 stackErr stackDtor(stack* stk);
+void litterMemory(void* ptr, size_t sizeToPollute);
 
 #endif /* STACK_H */

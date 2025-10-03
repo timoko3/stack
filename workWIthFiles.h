@@ -1,34 +1,16 @@
-#ifndef FILE_PARSE_H
-#define FILE_PARSE_H
+#ifndef FILES_H
+#define FILES_H
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
-#include <sys/stat.h>
 
-#include "strFunc.h"
+const char* const ALERT_GET_INFO_FAILURE            = "Ошибка при попытке получить информацию о файле\n";
+const char* const GET_FILE_SIZE_ERROR_DESCRIPTION   = "getFileSize() failed";
+const char* const ALERT_FILE_OPEN_FAILURE           = "Ошибка при открытии файла %s\n";
+const char* const OPEN_INPUT_FILE_ERROR_DESCRIPTION = "openInputFile() failed";
 
-const char* const INPUT_FILE_NAME                       = "calcCommands.txt";   
-const char* const ALERT_FILE_OPEN_FAILURE               = "РћС€РёР±РєР° РїСЂРё РѕС‚РєСЂС‹С‚РёРё С„Р°Р№Р»Р° %s\n";
-const char* const ALERT_GET_INFO_FAILURE                = "РћС€РёР±РєР° РїСЂРё РїРѕРїС‹С‚РєРµ РїРѕР»СѓС‡РёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С„Р°Р№Р»Рµ\n";
-const char* const ALERT_STR_FROM_FILE_TO_STRUCT_FAILURE = "РћС€РёР±РєР° РїСЂРё РїРµСЂРµРґР°С‡Рµ РёРЅС„РѕСЂРјР°С†РёРё Рѕ С„Р°Р№Р»Рµ РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ\n";
+size_t getFileSize(const char* fileName);
+FILE* openInputFile(const char* fileName);
 
-const char* const GET_FILE_SIZE_ERROR_DESCRIPTION     = "getFileSize() failed";
-const char* const OPEN_INPUT_FILE_ERROR_DESCRIPTION   = "openInputFile() failed";
-const char* const FAILURE_STRINGS_FROM_FILE_TO_STRUCT = "stringsFromFileToStructure() failed";
-
-
-struct DataFromInputFIle {
-    size_t fileSize;
-    FILE* inputFile;
-    int nStrings;
-    char* buffer;
-    size_t bufferSize;
-    string* strings;
-};
-
-
-int stringsFromFileToStructure(DataFromInputFIle* DataFromInputFIle);
-
-
-#endif /*FILE_PARSE_H*/
+#endif /* FILES_H */

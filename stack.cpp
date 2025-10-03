@@ -1,4 +1,7 @@
 #include "stack.h"
+#include <stdint.h>
+
+#define ON_DEBUG_LEVEL_4(expression) if(DEBUG_LEVEL > 3){expression};
 
 struct errorDescription errors[AMOUNT_ERROR_TYPES]{
     {PROCESS_OK,             "Все хорошо\n"},
@@ -8,8 +11,8 @@ struct errorDescription errors[AMOUNT_ERROR_TYPES]{
     {BAD_MEMORY_ALLOCATION,  "Некорректное выделение памяти\n"},
     {SIZE_EXCEEDS_CAPACITY,  "Размер стека превышает объем выделяемой памяти\n"},
     {CANARY_TORTURE,         "Канарейка была замучена до смерти\n"},
-    {POP_WITH_BAD_SIZE,      "Попытка достать элемент из недопустимой области\n"}, // ??
-    {UNPLANNED_STACK_CHANGE, "Стек незапланировано изменен\n"}
+    {EMPTY_STACK,            "Стэк опустел и получение элемента не возможно\n"}, 
+    {UNPLANNED_STACK_CHANGE, "Стек несакнкционированно изменен извне\n"}
 };
 
 static void InitializeStackBuffer(stack* stk, size_t startStackInd);
@@ -32,7 +35,15 @@ static stackErr canaryCheck(stack* stk);
 #if DEBUG_LEVEL > 2
 
 unsigned long genHash(stack* stk);
-static stackErr hashCheck(stack* stk);
+static void hashStackStructure(stack* stk, unsigned long* hash);
+static void hashData(stack* stk, unsigned long* hash);
+static stackErr checkHash(stack* stk);
+
+#endif /* DEBUG */
+
+#if DEBUG_LEVEL > 3
+
+void print_mem_hex(const void *ptr, size_t size);
 
 #endif /* DEBUG */
 
@@ -54,9 +65,9 @@ stackErr stackCtor(stack* stk, size_t capacity){
     stk->size = 0;
     stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
     assert(stk->data);
-    
-    InitializeStackBuffer(stk, 0);
 
+    InitializeStackBuffer(stk, 0);
+    
     #if DEBUG_LEVEL > 1
     setCanaryProtection(stk);
     #endif
@@ -109,12 +120,11 @@ stackErr stackPush(stack* stk, stack_t value){
     #else
     stk->data[stk->size] = value;
     #endif
+    (stk->size)++;
 
     #if DEBUG_LEVEL > 2
     stk->hash = genHash(stk);
     #endif
-
-    (stk->size)++;
 
     #if DEBUG_LEVEL > 0
     verify
@@ -132,24 +142,24 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
 
     #if DEBUG_LEVEL > 1 
     if(stk->data[stk->size] == CANARY_PROTECTION_NUMBER){
-        return POP_WITH_BAD_SIZE;
+        return EMPTY_STACK;
     }
     *stackElem = stk->data[stk->size];
     stk->data[stk->size] = POISON_NUMBER;
     #else
 
     if(stk->size <= 0){
-        return POP_WITH_BAD_SIZE;
+        return EMPTY_STACK;
     }
     *stackElem = stk->data[stk->size - 1];
     stk->data[stk->size - 1] = POISON_NUMBER;
     #endif
 
-    #if DEBUG_LEVEL > 2
-        stk->hash = genHash(stk);
-    #endif /* DEBUG */
-
     (stk->size)--;
+
+    #if DEBUG_LEVEL > 2
+    stk->hash = genHash(stk);
+    #endif /* DEBUG */
 
     #if DEBUG_LEVEL > 0
     verify
@@ -166,13 +176,29 @@ stackErr stackDtor(stack* stk){
     }
     stk->size = rand();
     stk->capacity = rand();
-    stk->hash = rand();
-    stk->error = errors[rand() % 9]; /// после реализации хэей
+    litterMemory(&stk->error, sizeof(stk->error));
+
+    #if DEBUG_LEVEL > 1
+    litterMemory(&stk->canaryStatus, sizeof(stk->canaryStatus));
+    #endif /* DEBUG */
+
+    #if DEBUG_LEVEL > 2
+    litterMemory(&stk->hash, sizeof(stk->hash));
+    #endif
 
     free(stk->data);
     stk->data = NULL;
 
     return PROCESS_OK;
+}
+
+void litterMemory(void* ptr, size_t sizeToPollute){
+    assert(ptr);
+    char* toPollute = (char*) ptr;
+
+    for(size_t i = 0; i < sizeToPollute; i++){
+        *(toPollute + i) = (char) (rand() % 255);
+    }
 }
 
 static void InitializeStackBuffer(stack* stk, size_t startStackInd){
@@ -217,7 +243,7 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
         #endif
 
         #if DEBUG_LEVEL > 2
-        else if(hashCheck(stk) != PROCESS_OK);
+        else if(checkHash(stk) != PROCESS_OK);
         #endif
 
         else{
@@ -326,14 +352,16 @@ static stackErr canaryCheck(stack* stk){
 
 unsigned long genHash(stack* stk){
     assert(stk);
+    
+    #if DEBUG_LEVEL > 3
+    printf("Размер структуры staka: %d\n", sizeof(*stk));
+    // ON_DEBUG_LEVEL_4(print_mem_hex(stk, sizeof(*stk));)
+    #endif /* DEBUG */
 
     unsigned long hash = 5381;
 
-    size_t curElemInd = 0;
-    while(curElemInd < stk->capacity){
-        hash = ((hash << 5) + hash) + (unsigned long) stk->data[curElemInd];
-        curElemInd++;
-    }
+    hashStackStructure(stk, &hash);
+    hashData(stk, &hash);
 
     #if DEBUG_LEVEL > 3
     printf("CurHash: %lu\n", hash);
@@ -342,7 +370,27 @@ unsigned long genHash(stack* stk){
     return hash;
 }
 
-static stackErr hashCheck(stack* stk){ // check hash
+static void hashStackStructure(stack* stk, unsigned long* hash){
+    size_t curBiteInd = 0;
+    while(curBiteInd < (sizeof(stk->data) + 2 * sizeof(size_t))){
+        #if DEBUG_LEVEL > 3
+        printf("Current adress: %p\n", (((char*)stk + curBiteInd)));
+        #endif
+
+        *hash = ((*hash << 5) + *hash) + (unsigned char) (*((char*)stk + curBiteInd));
+        curBiteInd++;
+    }
+}
+
+static void hashData(stack* stk, unsigned long* hash){
+    size_t curDataInd = 0;
+    while(curDataInd < stk->capacity){
+        *hash = ((*hash << 5) + *hash) + (unsigned long) stk->data[curDataInd];
+        curDataInd++;
+    }
+}
+
+static stackErr checkHash(stack* stk){ // check hash
     assert(stk);
 
     if(stk->hash != genHash(stk)){
@@ -352,5 +400,18 @@ static stackErr hashCheck(stack* stk){ // check hash
 
     return PROCESS_OK;
 }
+
+#if DEBUG_LEVEL > 3
+
+void print_mem_hex(const void *ptr, size_t size) {
+    const uint8_t *p = (const uint8_t*)ptr;
+    for (size_t i = 0; i < size; ++i) {
+        printf("%02X ", p[i]);
+        if ((i+1) % 16 == 0) putchar('\n'); // перенос строки каждые 16 байт
+    }
+    if (size % 16 != 0) putchar('\n');
+}
+
+#endif /* DEBUG */
 
 #endif /* DEBUG */
