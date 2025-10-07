@@ -1,46 +1,12 @@
 #include "strFunc.h"
 
-#define PLUS true
-#define MINUS false
-
-int strCmpSpuCom(const char* a, const char* b){
-    return *(int*)a - *(int*)b;
-}
+#include <ctype.h>
+#include <assert.h>
 
 static void myToLower(char* sym);
-static void skipPunct(int* curSym, const char* str, bool sign);
 
-int myStrCmpFromBegin(const char* leftStr, const char* rightStr){
-    assert(leftStr);
-    assert(rightStr);
-    
-    int result = 0;
-    int leftCurSymInd = 0, rightCurSymInd = 0;
-    while(true){
-        
-        skipPunct(&leftCurSymInd, leftStr, PLUS);
-        skipPunct(&rightCurSymInd, rightStr, PLUS);
-
-        char leftCurSym = leftStr[leftCurSymInd];
-        char rightCurSym = rightStr[rightCurSymInd];
-
-        myToLower(&leftCurSym);
-        myToLower(&rightCurSym);
-
-        if(leftCurSym == END_COMPARISON_STR && rightCurSym == END_COMPARISON_STR){
-             result = 0;
-             break;
-        }
-        else if(leftCurSym != rightCurSym){
-            result = leftCurSym - rightCurSym;
-            break;
-        }
-        
-        leftCurSymInd++;
-        rightCurSymInd++;
-    }
-
-    return result;
+int strCmpSpuCom(const char* curCommandFromFile, const char* curReferenceCommand){
+    return *(int*)curCommandFromFile - *(int*)curReferenceCommand;
 }
 
 size_t myStrLen(const char* start, char endStr){
@@ -61,22 +27,18 @@ static void myToLower(char* sym){
     
 }
 
-static void skipPunct(int* curSymInd, const char* str, bool sign){
-    assert(curSymInd);
-    assert(str);
+int countStrings(char* buf, int fileSize, char endStr){
+    assert(buf);
 
-    while(true){
-        if(ispunct(str[*curSymInd])){
-            if(sign){
-                (*curSymInd)++;
-            }
-            else{
-                (*curSymInd)--;
-            }
+    int nStrings = 1;
+
+    int curSym = 0;
+    while(curSym < fileSize){
+        if(buf[curSym] == endStr){
+            nStrings++;
         }
-        else{
-            break;
-        }
+        curSym++;
     }
 
+    return nStrings;
 }

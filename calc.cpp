@@ -18,11 +18,11 @@ void spu(stack* stk){
 
     processor spu1 = {0}; /// ?
     int regs[10];
-    size_t sizeByteCode = getFileSize(BITE_CODE_FILE_NAME);
+    size_t sizeByteCode = getFileSize(BYTE_CODE_FILE_NAME);
     int* byteCode = (int*) calloc(1, sizeByteCode);
     assert(byteCode);
 
-    FILE* byteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
+    FILE* byteCodeFile = myOpenFile(BYTE_CODE_FILE_NAME);
     assert(byteCodeFile);
 
     fread(byteCode, 1, sizeByteCode, byteCodeFile);

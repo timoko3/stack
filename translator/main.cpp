@@ -1,8 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include "general/file.h"
 #include "general/strFunc.h"
-// #include "translator.h"
+#include "translator.h"
+
+/// Нельзя убирать
+#define DEBUG 0
+
+#define ON_DEBUG(expression) if(DEBUG){expression;};
+
+#if DEBUG
+static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
+#endif /* DEBUG */
 
 struct byteCodeBuffer{
     size_t size;
@@ -21,15 +32,6 @@ spu_command spu_commands[N_SPU_COMMANDS] = {
     {"OUT", OUT}
 };
 
-/// Нельзя убирать
-#define DEBUG 0
-
-#define ON_DEBUG(expression) if(DEBUG){expression;};
-
-#if DEBUG
-static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
-#endif /* DEBUG */
-
 static int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize);
 static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
@@ -39,7 +41,7 @@ static void createByteCodeFile(int* byteCodeBuffer, int curByteBufferSize);
 int main(void){
     fprintf(stderr, "MEOW BEGIN\n");
     DataFromInputFIle calcCommands;
-    stringsFromFileToStructure(&calcCommands);
+    stringsFromFileToFileDataStructure(&calcCommands);
     
     size_t curByteBufferSize = 0;
     int* byteCodeBuffer = createByteCodeBuffer(&calcCommands, &curByteBufferSize);
@@ -154,7 +156,12 @@ static int assemble(char* curCommand){
 static void createByteCodeFile(int* byteCodeBuffer, int curByteBufferSize){
     assert(byteCodeBuffer);
 
-    FILE* byteCodeFile = openByteCodeFile();
+    fileDescription byteCode = {
+        BYTE_CODE_FILE_NAME,
+        "wb"
+    };
+
+    FILE* byteCodeFile = myOpenFile(&byteCode);
     assert(byteCodeFile);
 
     size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
