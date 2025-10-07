@@ -1,6 +1,6 @@
 #include "calc.h"
 
-calcCommandsDescription calcCommands[N_CALC_COMMANDS]{
+calcCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
     {ADD, add},
     {SUB, sub},
     {MUL, mul},
@@ -8,37 +8,38 @@ calcCommandsDescription calcCommands[N_CALC_COMMANDS]{
     {OUT, out}
 }; 
 
-// registerCommandsDescription registerCommands[N_REGISTER_COMMANDS]{
-//     {PUSHREG, pushreg},
-//     {POPREG, popreg}
-// };
+registerCommandsDescription registerCommands[N_REGISTER_COMMANDS]{
+    {PUSHREG, pushreg},
+    {POPREG,  popreg}
+};
 
-void calculator(stack* stk){
+void spu(stack* stk){
     assert(stk);
 
-    processor spu1 = {0};
+    processor spu1 = {0}; /// ?
     int regs[10];
+    size_t sizeByteCode = getFileSize(BITE_CODE_FILE_NAME);
+    int* byteCode = (int*) calloc(1, sizeByteCode);
+    assert(byteCode);
 
-    size_t sizeBiteCode = getFileSize(BITE_CODE_FILE_NAME);
-    int* biteCode = (int*) calloc(1, sizeBiteCode);
-    assert(biteCode);
+    FILE* byteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
+    assert(byteCodeFile);
 
-    FILE* biteCodeFile = openInputFile(BITE_CODE_FILE_NAME);
-    assert(biteCodeFile);
+    fread(byteCode, 1, sizeByteCode, byteCodeFile);
+    fclose(byteCodeFile);
 
-    fread(biteCode, 1, sizeBiteCode, biteCodeFile);
+    // readTextFromFile
 
-    spu1.biteCode = biteCode;
+    spu1.byteCode = byteCode;
     spu1.stk = *stk;
     spu1.pc = 0;
 
-    while(spu1.pc < (sizeBiteCode / sizeof(int))){
+    while(spu1.pc < (sizeByteCode / sizeof(int))){
         completeCommand(&spu1);
         spu1.pc++;
     }
-
-    fclose(biteCodeFile);
-    free(biteCode);
+    printf("END IS NEAR\n");
+    free(byteCode);
 }
 
 bool completeCommand(processor* spu){
@@ -46,18 +47,20 @@ bool completeCommand(processor* spu){
 
     bool result = false;
 
-    if(spu->biteCode[spu->pc] == PUSH){
-        stack_t pushParameter = spu->biteCode[spu->pc + 1];
-        stackPush(&(spu->stk), pushParameter);
+    if(spu->byteCode[spu->pc] == PUSH){
+        spu->pc++;
+        stack_t pushParameter = spu->byteCode[spu->pc];
+        spu->pc++;
+        stackPush(&(spu->stk), pushParameter); 
 
         (spu->pc)++;
         return true;
     }
 
     for(size_t curCommandInd = 0; curCommandInd < N_CALC_COMMANDS; curCommandInd++){
-        if(calcCommands[curCommandInd].code == spu->biteCode[spu->pc]){
+        if(calcCommands[curCommandInd].code == spu->byteCode[spu->pc]){
             calcCommands[curCommandInd].function(&spu->stk);
-            
+
             result = true;
             break;
         }
@@ -72,6 +75,7 @@ bool add(stack* stk){
 
     stackPop(stk, &term1);
     stackPop(stk, &term2);
+
     stackPush(stk, term1 + term2);
     
     return true;
@@ -136,9 +140,15 @@ bool out(stack* stk){
 }
 
 bool pushreg(processor* spu){
-   return true; 
+    stack_t curReg = spu->regs[spu->byteCode[spu->pc + 1]];
+    stackPush(&spu->stk, curReg);
+
+    return true; 
 }
 
 bool popreg(processor* spu){
-   return true; 
+    stack_t curReg = spu->regs[spu->byteCode[spu->pc + 1]];
+    stackPop(&spu->stk, &curReg);
+
+    return true; 
 }

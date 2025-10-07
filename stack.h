@@ -7,10 +7,10 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "consoleColors.h"
+#include "genConsoleColors/consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 3
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0

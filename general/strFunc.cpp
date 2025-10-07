@@ -3,6 +3,10 @@
 #define PLUS true
 #define MINUS false
 
+int strCmpSpuCom(const char* a, const char* b){
+    return *(int*)a - *(int*)b;
+}
+
 static void myToLower(char* sym);
 static void skipPunct(int* curSym, const char* str, bool sign);
 

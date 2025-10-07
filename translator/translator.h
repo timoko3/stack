@@ -3,7 +3,8 @@
 
 // #include <stdio.h>
 
-const char* const  BITE_CODE_FILE_NAME = "biteCode.asm";
+const char* const TEXT_COMMANDS     = "translator/calcCommands.txt";   
+const char* const BITE_CODE_FILE_NAME = "byteCode.asm";
 
 const int ASSEMBLE_FAILURE = -1;
 

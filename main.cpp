@@ -1,16 +1,16 @@
 #include "calc.h"
 
-#define stackCtor(stk, capacity) if(stackCtor(stk, capacity) != PROCESS_OK) return stk1.error.type
-#define stackPush(stk, value)    if(stackPush(stk, value)    != PROCESS_OK) return stk1.error.type
-#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem)   != PROCESS_OK) return stk1.error.type
+#define stackCtor(stk, capacity) if(stackCtor(stk, capacity) != PROCESS_OK) return stackSpu.error.type
+#define stackPush(stk, value)    if(stackPush(stk, value)    != PROCESS_OK) return stackSpu.error.type
+#define stackPop(stk, stkElem)   if(stackPop(stk, stkElem)   != PROCESS_OK) return stackSpu.error.type
 
 int main(void){
-    stack stk1 = {0};
-    stackCtor(&stk1, 10);
+    stack stackSpu = {0};
+    stackCtor(&stackSpu, 10);
 
-    calculator(&stk1);
-    
-    stackDtor(&stk1);
+    spu(&stackSpu);
+
+    stackDtor(&stackSpu);
 
     return 0;
 }

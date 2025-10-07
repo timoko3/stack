@@ -1,9 +1,10 @@
-#include "file.h"
-#include "strFunc.h"
-#include "translator.h"
 #include <stdio.h>
 
-struct biteCodeBuffer{
+#include "general/file.h"
+#include "general/strFunc.h"
+// #include "translator.h"
+
+struct byteCodeBuffer{
     size_t size;
     char* pointer;
 };
@@ -26,101 +27,111 @@ spu_command spu_commands[N_SPU_COMMANDS] = {
 #define ON_DEBUG(expression) if(DEBUG){expression;};
 
 #if DEBUG
-static void printBiteCodeBuffer(int* buffer, size_t curBiteBufferSize);
+static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
 #endif /* DEBUG */
 
-static int* createBiteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curBiteBufferSize);
-static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* biteCodeBuffer, size_t* curBiteBufferSize);
-static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* biteCodeBuffer, size_t* curBiteBufferSize);
+static int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize);
+static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static int assemble(char* curCommand);
-static void createBiteCodeFile(int* biteCodeBuffer, int curBiteBufferSize);
+static void createByteCodeFile(int* byteCodeBuffer, int curByteBufferSize);
 
 int main(void){
-    fprintf(stderr, "MEOW");
+    fprintf(stderr, "MEOW BEGIN\n");
     DataFromInputFIle calcCommands;
     stringsFromFileToStructure(&calcCommands);
-
-    size_t curBiteBufferSize = 0;
-    int* biteCodeBuffer = createBiteCodeBuffer(&calcCommands, &curBiteBufferSize);
-
+    
+    size_t curByteBufferSize = 0;
+    int* byteCodeBuffer = createByteCodeBuffer(&calcCommands, &curByteBufferSize);
+    
     #if DEBUG > 0
-    printBiteCodeBuffer(biteCodeBuffer, curBiteBufferSize);
+    printByteCodeBuffer(byteCodeBuffer, curByteBufferSize);
     #endif /* DEBUG */
 
-    createBiteCodeFile(biteCodeBuffer, curBiteBufferSize);
+    createByteCodeFile(byteCodeBuffer, curByteBufferSize);
 
-    free(biteCodeBuffer);
+    free(calcCommands.buffer); // 
+    free(calcCommands.strings); // 
+    free(byteCodeBuffer);
+
+    fprintf(stderr, "MEOW END\n");
 }
 
-static int* createBiteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curBiteBufferSize){
+static int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize){
     assert(calcCommands);
-    assert(curBiteBufferSize);
+    assert(curByteBufferSize);
     
     /// выделение памяти можно доработать
-    int* biteCodeBuffer = (int*) calloc(sizeof(int), calcCommands->nStrings * 2);
-    fprintf(stderr, "biteCodeBuffer size = %d\n", calcCommands->nStrings * 2);
-    assert(biteCodeBuffer);
+    int* byteCodeBuffer = (int*) calloc(sizeof(int), calcCommands->nStrings * 2);
+    fprintf(stderr, "byteCodeBuffer size = %d\n", calcCommands->nStrings * 2);
+    assert(byteCodeBuffer);
 
     for(int curString = 0; curString < calcCommands->nStrings; curString++){
         char curCommand[20] = {0}; // 20
         sscanf(calcCommands->strings[curString].stringPtr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         
-        int commandCode = assemble(curCommand);
+        // assemble (com + arg)
+        // decode / code 
+        // assemble command 
+        int commandCode = assemble(curCommand); 
         if(commandCode == ASSEMBLE_FAILURE) continue;
-        biteCodeBuffer[*curBiteBufferSize++] = commandCode;
+        byteCodeBuffer[*curByteBufferSize] = commandCode;
         
-        ON_DEBUG(printf("biteCodeBuffer now: %d\n", biteCodeBuffer[*curBiteBufferSize]))
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]))
         
-        fprintf(stderr, "curBiteBufferSize = (%p) %d\n", curBiteBufferSize, *curBiteBufferSize);
+        fprintf(stderr, "curByteBufferSize = (%p)\n", curByteBufferSize);
+        fprintf(stderr, "curByteBufferSize = (%p) %d\n", curByteBufferSize, *curByteBufferSize);
         
+        (*curByteBufferSize)++;
+
         // command
-        addStackFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, biteCodeBuffer, curBiteBufferSize);
-        addRegisterFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, biteCodeBuffer, curBiteBufferSize);
+        addStackFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addRegisterFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
 
         ON_DEBUG(printf("\n"))
         
     }
-    ON_DEBUG(printf("curBiteBufferSize: %ld\n", *curBiteBufferSize))
+    ON_DEBUG(printf("curByteBufferSize: %ld\n", *curByteBufferSize))
 
-    return biteCodeBuffer;
+    return byteCodeBuffer;
 }   
 
-static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* biteCodeBuffer, size_t* curBiteBufferSize){
+// const
+static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
-    assert(biteCodeBuffer);
-    assert(curBiteBufferSize);
+    assert(byteCodeBuffer);
+    assert(curByteBufferSize);
 
     if((commandCode == PUSH) || 
        (commandCode == POP)){
-        int pushParameter = 0;
 
+        int pushParameter = 0;
         sscanf(stringPtr, "%*s %d", &pushParameter);
 
-        biteCodeBuffer[*curBiteBufferSize] = pushParameter;
-        ON_DEBUG(printf("biteCodeBuffer now: %d\n", biteCodeBuffer[*curBiteBufferSize]);)
-        (*curBiteBufferSize)++;
+        byteCodeBuffer[*curByteBufferSize] = pushParameter;
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
+        (*curByteBufferSize)++;
     }
 
     return true;
 }
 
-static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* biteCodeBuffer, size_t* curBiteBufferSize){
+static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
-    assert(biteCodeBuffer);
-    assert(curBiteBufferSize);
+    assert(byteCodeBuffer);
+    assert(curByteBufferSize);
 
     if((commandCode == PUSHREG) || 
        (commandCode == POPREG)){
-        char reg[5];
 
+        char reg[5]; // 5
         sscanf(stringPtr, "%*s %s", reg);
 
         /// преобразование имя стека в номер стека
-        biteCodeBuffer[*curBiteBufferSize] = reg[0] - 'A';
-
-        ON_DEBUG(printf("biteCodeBuffer now: %d\n", biteCodeBuffer[*curBiteBufferSize]);)
-        (*curBiteBufferSize)++;
+        byteCodeBuffer[*curByteBufferSize] = reg[0] - 'A';
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
+        (*curByteBufferSize)++;
     }
 
     return true;
@@ -140,26 +151,26 @@ static int assemble(char* curCommand){
     return ASSEMBLE_FAILURE;
 }
 
-static void createBiteCodeFile(int* biteCodeBuffer, int curBiteBufferSize){
-    assert(biteCodeBuffer);
+static void createByteCodeFile(int* byteCodeBuffer, int curByteBufferSize){
+    assert(byteCodeBuffer);
 
-    FILE* biteCodeFile = openBiteCodeFile();
-    assert(biteCodeFile);
+    FILE* byteCodeFile = openByteCodeFile();
+    assert(byteCodeFile);
 
-    size_t written = fwrite(biteCodeBuffer, sizeof(int), curBiteBufferSize, biteCodeFile);
-    if(written != curBiteBufferSize){
+    size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
+    if(written != curByteBufferSize){
         ///log
         perror("fwrite error");
     }
 
-    fclose(biteCodeFile);
+    fclose(byteCodeFile);
 }
 
 #if DEBUG > 0
-static void printBiteCodeBuffer(int* buffer, size_t curBiteBufferSize){
+static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize){
     assert(buffer);
 
-    for(size_t curBufferElemInd = 0; curBufferElemInd < curBiteBufferSize; curBufferElemInd++){
+    for(size_t curBufferElemInd = 0; curBufferElemInd < curByteBufferSize; curBufferElemInd++){
         printf("%ld) элемент буфера: %d\n", curBufferElemInd + 1, buffer[curBufferElemInd]);
     }
 }

@@ -3,7 +3,7 @@
 
 #define ON_DEBUG_LEVEL_4(expression) if(DEBUG_LEVEL > 3){expression};
 
-struct errorDescription errors[AMOUNT_ERROR_TYPES]{
+struct errorDescription errors[AMOUNT_ERROR_TYPES]{ // AMOUNT_ERROR_TYPES
     {PROCESS_OK,             "Все хорошо\n"},
     {CAPACITY_EXCEEDS_LIMIT, "Значение capacity превышает максимально возможное\n"}, 
     {NULL_POINTER,           "Указатели не должны быть нулевыми\n"},
@@ -47,15 +47,26 @@ void print_mem_hex(const void *ptr, size_t size);
 
 #endif /* DEBUG */
 
+// MENTOR
+// struct {
+//     ...
+//     ...
+//     ...
+//     ...
+//     ha
+// }
+
+// sizeof(field1) + sizeof(field2) + sizeof(field3) + ...
+
 stackErr stackCtor(stack* stk, size_t capacity){
     assert(stk);
     assert(capacity > 0);
     assert(capacity < STACK_MAX_CAPACITY);
 
     #if DEBUG_LEVEL > 1
-        stk->capacity = capacity + CANARY_PROTECTION_SIZE * 2;
+    stk->capacity = capacity + CANARY_PROTECTION_SIZE * 2;
     #else 
-        stk->capacity = capacity;
+    stk->capacity = capacity;
     #endif /* DEBUG */
 
     #if DEBUG_LEVEL == 0
@@ -132,6 +143,15 @@ stackErr stackPush(stack* stk, stack_t value){
 
     return PROCESS_OK;
 }
+
+// size 5
+// cap 8
+// 5 8 0
+// hash 13
+// 5 8 13
+// ...
+// 5 8 13
+// hash 
 
 stackErr stackPop(stack* stk, stack_t* stackElem){
     assert(stackElem);
@@ -353,14 +373,14 @@ static stackErr canaryCheck(stack* stk){
 unsigned long genHash(stack* stk){
     assert(stk);
     
-    #if DEBUG_LEVEL > 3
+    #if DEBUG_LEVEL >= 4
     printf("Размер структуры staka: %d\n", sizeof(*stk));
     // ON_DEBUG_LEVEL_4(print_mem_hex(stk, sizeof(*stk));)
     #endif /* DEBUG */
 
     unsigned long hash = 5381;
 
-    hashStackStructure(stk, &hash);
+    hashStackStructure(stk, &hash); // struct
     hashData(stk, &hash);
 
     #if DEBUG_LEVEL > 3
@@ -370,15 +390,16 @@ unsigned long genHash(stack* stk){
     return hash;
 }
 
+// MENTOR 
 static void hashStackStructure(stack* stk, unsigned long* hash){
-    size_t curBiteInd = 0;
-    while(curBiteInd < (sizeof(stk->data) + 2 * sizeof(size_t))){
+    size_t curByteInd = 0;
+    while(curByteInd < (sizeof(stk->data) + 2 * sizeof(size_t))){
         #if DEBUG_LEVEL > 3
-        printf("Current adress: %p\n", (((char*)stk + curBiteInd)));
+        printf("Current adress: %p\n", (((char*)stk + curByteInd)));
         #endif
 
-        *hash = ((*hash << 5) + *hash) + (unsigned char) (*((char*)stk + curBiteInd));
-        curBiteInd++;
+        *hash = ((*hash << 5) + *hash) + (unsigned char) (*((char*)stk + curByteInd));
+        curByteInd++;
     }
 }
 
@@ -390,7 +411,7 @@ static void hashData(stack* stk, unsigned long* hash){
     }
 }
 
-static stackErr checkHash(stack* stk){ // check hash
+static stackErr checkHash(stack* stk){
     assert(stk);
 
     if(stk->hash != genHash(stk)){
