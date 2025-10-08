@@ -288,7 +288,7 @@ static void assignErrorStruct(stack* stk, stackErr type){
 
 void static stackDump(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
-        printf("Передача нулевого указателя недопустима\n");                                                                                                                                            printf ("MEOW \curCommandFromFile\curCommandFromFile\curCommandFromFile\curCommandFromFile\curCommandFromFile\curCommandFromFile");
+        printf("Передача нулевого указателя недопустима\n");                                                                                                          
         return;
     }
     

@@ -8,8 +8,8 @@
 
 // #define DEBUG
 
-static char* getTextToBuffer(FILE* inputFile, int fileSize);
-static string* divideBufferToStringsStructure(char* buffer, int nStrings);
+static char* getTextToBuffer(FILE* inputFile, size_t fileSize);
+static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 
 #ifdef DEBUG
 static void printBuffer(char* buffer);
@@ -72,7 +72,7 @@ FILE* myOpenFile(fileDescription* file){
 // MENTOR FILE* openByteCodeFile(){
 // static FILE* myOpenFile(){
 
-static char* getTextToBuffer(FILE* inputFIle, int fileSize){
+static char* getTextToBuffer(FILE* inputFIle, size_t fileSize){
     assert(inputFIle);
     
     char* buffer = (char*) calloc(fileSize + SIZE_OF_END_FILE, sizeof(char)); 
@@ -85,7 +85,7 @@ static char* getTextToBuffer(FILE* inputFIle, int fileSize){
     return buffer;
 }
 
-static string* divideBufferToStringsStructure(char* buffer, int nStrings){
+static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     // struct 
     assert(buffer);
     
@@ -109,14 +109,14 @@ static string* divideBufferToStringsStructure(char* buffer, int nStrings){
         if(buffer[curSym] == END_STR){
             
             strings[curStr].stringPtr = buffer + curSym + 1;
-            strings[curStr - 1].len = strings[curStr].stringPtr - 
-                                      strings[curStr - 1].stringPtr;
+            strings[curStr - 1].len = (size_t) strings[curStr].stringPtr - 
+                                      (size_t) strings[curStr - 1].stringPtr;
             curStr++;
         }
         
     }
     
-    strings[curStr - 1].len = (buffer + curSym) - strings[curStr - 1].stringPtr;
+    strings[curStr - 1].len = (size_t) ((buffer + curSym) - strings[curStr - 1].stringPtr);
 
     return strings;
 }

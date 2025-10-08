@@ -1,7 +1,10 @@
 #ifndef TRANSLATOR_H
 #define TRANSLATOR_H
 
-// #include <stdio.h>
+#include "general/file.h"
+#include "general/strFunc.h"
+
+#include <stdio.h>
 
 const char* const TEXT_COMMANDS_FILE_NAME = "translator/calcCommands.txt";   
 const char* const BYTE_CODE_FILE_NAME     = "byteCode.asm";
@@ -23,8 +26,15 @@ enum spu_commands_codes{
 struct spu_command{
     const char* name;
     spu_commands_codes code;
+    unsigned long hash;
 };
 
-const size_t N_SPU_COMMANDS = 9;
+struct byteCodeBuffer{
+    size_t size;
+    char* pointer;
+};
+
+void setSpuCommandsHash();
+int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize);
 
 #endif /* TRANSLATOR_H */

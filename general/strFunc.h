@@ -16,9 +16,10 @@ const int SIZE_OF_END_FILE     = 2;
 const char END_STR             = '\n';
 const char END_COMPARISON_STR  = '\0';
 
-int countStrings(char* buf, int fileSize, char endStr);
+size_t countStrings(char* buf, size_t fileSize, char endStr);
 size_t myStrLen(const char* start, char endStr);
 
-int strCmpSpuCom(const char* curCommandFromFile, const char* curReferenceCommand); ////////////////////MENTOR
+unsigned long hashStr(const char* str);
+int cmpHashSpuCom(unsigned long curCommandFromFile, unsigned long curReferenceCommand); ////////////////////MENTOR
 
 #endif /* STR_FUNC_H */
