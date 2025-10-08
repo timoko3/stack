@@ -28,4 +28,6 @@ int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle);
 size_t getFileSize(const char* fileName);
 FILE* myOpenFile(fileDescription* file);
 
+void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize);
+
 #endif /*FILE_PARSE_H*/

@@ -121,6 +121,26 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     return strings;
 }
 
+void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize){
+    assert(byteCodeBuffer);
+
+    fileDescription byteCode = {
+        BYTE_CODE_FILE_NAME,
+        "wb"
+    };
+
+    FILE* byteCodeFile = myOpenFile(&byteCode);
+    assert(byteCodeFile);
+
+    size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
+    if(written != curByteBufferSize){
+        ///log
+        perror("fwrite error");
+    }
+
+    fclose(byteCodeFile);
+}
+
 #ifdef DEBUG
 static void printBuffer(char* buffer){
     assert(buffer);

@@ -1,4 +1,5 @@
 #include "stack.h"
+#include "general/litter.h"
 #include <stdint.h>
 
 #define ON_DEBUG_LEVEL_4(expression) if(DEBUG_LEVEL > 3){expression};
@@ -210,15 +211,6 @@ stackErr stackDtor(stack* stk){
     stk->data = NULL;
 
     return PROCESS_OK;
-}
-
-void litterMemory(void* ptr, size_t sizeToPollute){
-    assert(ptr);
-    char* toPollute = (char*) ptr;
-
-    for(size_t i = 0; i < sizeToPollute; i++){
-        *(toPollute + i) = (char) (rand() % 255);
-    }
 }
 
 static void InitializeStackBuffer(stack* stk, size_t startStackInd){

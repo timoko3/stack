@@ -1,6 +1,9 @@
-#include "calc.h"
+#include "processor.h"
+#include "general/litter.h"
 
-calcCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
+static processorErr getInfoFromByteCodeFile(processor* spu);
+
+processorCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
     {ADD, add},
     {SUB, sub},
     {MUL, mul},
@@ -8,53 +11,91 @@ calcCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
     {OUT, out}
 }; 
 
-registerCommandsDescription registerCommands[N_REGISTER_COMMANDS]{
+registerCommandsDescription registerCommands[]{
     {PUSHREG, pushreg},
     {POPREG,  popreg}
 };
 
-void spu(stack* stk){
-    assert(stk);
+processorErr processorCtor(processor* spu){
+    assert(spu);
 
-    processor spu1 = {0}; /// ?
-    int regs[10];
+    stack stackSpu = {0};
+    stackCtor(&stackSpu, 10);
+    spu->stk = stackSpu;
+    getInfoFromByteCodeFile(spu);
+
+    spu->pc = 0;
+
+    return SPU_PROCESS_OK;
+}
+
+static processorErr getInfoFromByteCodeFile(processor* spu){
+    assert(spu);
+
     size_t sizeByteCode = getFileSize(BYTE_CODE_FILE_NAME);
-    int* byteCode = (int*) calloc(1, sizeByteCode);
-    assert(byteCode);
+    spu->byteCode = (int*) calloc(1, sizeByteCode);
+    assert(spu->byteCode);
 
-    FILE* byteCodeFile = myOpenFile(BYTE_CODE_FILE_NAME);
+    spu->sizeByteCode = sizeByteCode;
+
+    fileDescription byteCodeFileDes = 
+    {
+        BYTE_CODE_FILE_NAME,
+        "rb"
+    };
+
+    FILE* byteCodeFile = myOpenFile(&byteCodeFileDes);
     assert(byteCodeFile);
 
-    fread(byteCode, 1, sizeByteCode, byteCodeFile);
-    fclose(byteCodeFile);
+    fread(spu->byteCode, 1, sizeByteCode, byteCodeFile);
 
-    // readTextFromFile
+    fclose(byteCodeFile);   
 
-    spu1.byteCode = byteCode;
-    spu1.stk = *stk;
-    spu1.pc = 0;
+    return SPU_PROCESS_OK;
+}
 
-    while(spu1.pc < (sizeByteCode / sizeof(int))){
-        completeCommand(&spu1);
-        spu1.pc++;
-    }
-    printf("END IS NEAR\n");
-    free(byteCode);
+processorErr processorDtor(processor* spu){
+    assert(spu);
+
+    stackDtor(&spu->stk);
+
+    litterMemory(spu->byteCode, spu->sizeByteCode);
+    free(spu->byteCode);
+    spu->byteCode = NULL;
+
+    litterMemory(spu->regs, sizeof(spu->regs));
+    
+    spu->pc = (size_t) rand();
+    spu->sizeByteCode = (size_t) rand();
+
+    return SPU_PROCESS_OK;
 }
 
 bool completeCommand(processor* spu){
     assert(spu);
 
     bool result = false;
-
+    
     if(spu->byteCode[spu->pc] == PUSH){
         spu->pc++;
         stack_t pushParameter = spu->byteCode[spu->pc];
-        spu->pc++;
+
         stackPush(&(spu->stk), pushParameter); 
 
-        (spu->pc)++;
         return true;
+    }
+    // else if(spu->byteCode[spu->pc] == POP){
+
+
+    // }
+
+    for(size_t curRegCommandInd = 0; curRegCommandInd < N_REGISTER_COMMANDS; curRegCommandInd++){
+        if(registerCommands[curRegCommandInd].code == spu->byteCode[spu->pc]){
+            registerCommands[curRegCommandInd].function(spu);
+
+            result = true;
+            break;
+        }
     }
 
     for(size_t curCommandInd = 0; curCommandInd < N_CALC_COMMANDS; curCommandInd++){
@@ -140,6 +181,8 @@ bool out(stack* stk){
 }
 
 bool pushreg(processor* spu){
+    assert(spu);
+
     stack_t curReg = spu->regs[spu->byteCode[spu->pc + 1]];
     stackPush(&spu->stk, curReg);
 
@@ -147,8 +190,9 @@ bool pushreg(processor* spu){
 }
 
 bool popreg(processor* spu){
-    stack_t curReg = spu->regs[spu->byteCode[spu->pc + 1]];
-    stackPop(&spu->stk, &curReg);
+    assert(spu);
+
+    stackPop(&spu->stk, &(spu->regs[spu->byteCode[spu->pc + 1]]));
 
     return true; 
 }

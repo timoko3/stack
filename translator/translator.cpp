@@ -26,8 +26,8 @@ spu_command spu_commands[] = {
     {"OUT", OUT}
 };
 
-static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
-static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static bool addStackCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static int  assembleCommand(char* curCommand);
 
 int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize){
@@ -55,8 +55,8 @@ int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBuffer
         (*curByteBufferSize)++;
 
         // command 
-        addStackFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
-        addRegisterFunctionParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addStackCommandsParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addRegisterCommandsParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
 
         ON_DEBUG(printf("\n"))
         
@@ -67,7 +67,7 @@ int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBuffer
 }   
 
 // const
-static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
+static bool addStackCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);
@@ -86,7 +86,7 @@ static bool addStackFunctionParameters(int commandCode, char* stringPtr, int* by
     return true;
 }
 
-static bool addRegisterFunctionParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
+static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);

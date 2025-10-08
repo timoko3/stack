@@ -8,11 +8,9 @@
 
 #define DEBUG 0
 
-void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize);
-
 int main(void){
     fprintf(stderr, "MEOW BEGIN\n");
-    
+
     setSpuCommandsHash();
 
     DataFromInputFIle calcCommands;
@@ -34,23 +32,5 @@ int main(void){
     fprintf(stderr, "MEOW END\n");
 }
 
-void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize){
-    assert(byteCodeBuffer);
 
-    fileDescription byteCode = {
-        BYTE_CODE_FILE_NAME,
-        "wb"
-    };
-
-    FILE* byteCodeFile = myOpenFile(&byteCode);
-    assert(byteCodeFile);
-
-    size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
-    if(written != curByteBufferSize){
-        ///log
-        perror("fwrite error");
-    }
-
-    fclose(byteCodeFile);
-}
 

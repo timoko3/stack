@@ -4,11 +4,12 @@
 #include <stdio.h>
 
 #include "general/file.h"
-#include "stack.h"
+#include "stack/stack.h"
 #include "translator/translator.h"
 
-const int N_CALC_COMMANDS     = 5; //
-const int N_REGISTER_COMMANDS = 2; //
+const size_t N_CALC_COMMANDS     = 5; //
+const size_t N_REGISTER_COMMANDS = 2; //
+const size_t N_REGISTERS         = 10;
 
 typedef bool (*stackCommand)(stack*);
 
@@ -18,16 +19,17 @@ bool mul(stack* stk);
 bool div(stack* stk);
 bool out(stack* stk);
 
-struct calcCommandsDescription{
+struct processorCommandsDescription{
     spu_commands_codes code;
     stackCommand function;
 };
 
 struct processor{
     stack stk;
-    int regs[10] = {0};
+    int regs[N_REGISTERS] = {};
     int* byteCode;
     size_t pc; // pointer to command
+    size_t sizeByteCode;
 };
 
 typedef bool (*registerCommand)(processor*);
@@ -40,7 +42,17 @@ struct registerCommandsDescription{
     registerCommand function;
 };
 
-void spu(stack* stk);
+struct stackCommandsDescription{
+    spu_commands_codes code;
+    stackCommand function;
+};
+
+enum processorErr{
+    SPU_PROCESS_OK
+};
+
+processorErr processorCtor(processor* spu);
+processorErr processorDtor(processor* spu);
 bool completeCommand(processor* spu);
 
 #endif /* CALC_H */

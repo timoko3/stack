@@ -10,7 +10,7 @@
 #include "genConsoleColors/consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 0
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0
@@ -72,6 +72,5 @@ stackErr stackCtor(stack* stk, size_t capacity);
 stackErr stackPush(stack* stk, stack_t value);
 stackErr stackPop(stack* stk, stack_t* stackElem);
 stackErr stackDtor(stack* stk);
-void litterMemory(void* ptr, size_t sizeToPollute);
 
 #endif /* STACK_H */
