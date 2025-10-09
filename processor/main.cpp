@@ -2,15 +2,16 @@
 #include "general/dump.h"
 
 int main(void){
+    const char* byteCodeInputFile = "byteCode.asm";
+
     processor spu1; 
-    
-    spu1.sizeByteCode = getFileSize(BYTE_CODE_FILE_NAME);
+    spu1.sizeByteCode = getFileSize(byteCodeInputFile);
     spu1.byteCode = (int*) calloc(1, spu1.sizeByteCode);
     assert(spu1.byteCode);
 
     fileDescription byteCodeFileDes = 
     {
-        BYTE_CODE_FILE_NAME,
+        byteCodeInputFile,
         "rb"
     };
     getIntNumsToBuffer(byteCodeFileDes, spu1.sizeByteCode, &spu1.byteCode);

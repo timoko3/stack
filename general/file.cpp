@@ -15,13 +15,13 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 static void printBuffer(char* buffer);
 #endif /* DEBUG */
 
-int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle){
+int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle, const char* fileName){
     assert(DataFromInputFIle);
 
-    if((DataFromInputFIle->fileSize = getFileSize(TEXT_COMMANDS_FILE_NAME)) == EXIT_FAILURE) return EXIT_FAILURE;
+    if((DataFromInputFIle->fileSize = getFileSize(fileName)) == EXIT_FAILURE) return EXIT_FAILURE;
 
     fileDescription inputFile = {
-        TEXT_COMMANDS_FILE_NAME, 
+        fileName, 
         "rb"
     };
 
@@ -118,11 +118,11 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     return strings;
 }
 
-void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize){
+void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName){
     assert(byteCodeBuffer);
 
     fileDescription byteCode = {
-        BYTE_CODE_FILE_NAME,
+        fileName,
         "wb"
     };
 
@@ -131,7 +131,6 @@ void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize){
 
     size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
     if(written != curByteBufferSize){
-        ///log
         perror("fwrite error");
     }
 

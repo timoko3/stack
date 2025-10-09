@@ -1,6 +1,7 @@
 #include "processor.h"
 #include "general/litter.h"
 #include "general/file.h"
+#include "general/dump.h"
 
 command commands[]{ 
     {ADD, add},
@@ -47,7 +48,8 @@ bool runProcessor(processor* spu){
         for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
             if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
                 commands[curCommandInd].ptr(spu);
-
+                
+                processorDump(spu);
                 result = true;
                 break;
             }

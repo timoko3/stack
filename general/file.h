@@ -25,12 +25,12 @@ struct fileDescription {
     const char* openMode;
 };
 
-int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle);
+int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle, const char* fileName);
 
 size_t getFileSize(const char* fileName);
 FILE* myOpenFile(fileDescription* file);
 
-void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize);
+void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName);
 bool getIntNumsToBuffer(fileDescription file, size_t fileSize, int** buffer);
 
 #endif /*FILE_PARSE_H*/

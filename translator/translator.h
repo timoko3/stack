@@ -4,10 +4,11 @@
 #include "general/file.h"
 #include "general/strFunc.h"
 
-#include <stdio.h> //////
+#define DEBUG_TRANSLATOR 0
 
-const char* const TEXT_COMMANDS_FILE_NAME = "spuCommands.txt";  // in main 
-const char* const BYTE_CODE_FILE_NAME     = "byteCode.asm";
+const size_t COMMAND_NAME_MAX_SIZE  = 10;
+const size_t REGISTER_NAME_MAX_SIZE = 5;
+const int A_ASCII_CODE              = (int) 'A';
 
 const int ASSEMBLE_FAILURE = -1;
 
@@ -19,6 +20,7 @@ enum spuCommandsCodes{
     MUL,
     DIV,
     OUT,
+    JMP,
     PUSHREG = 33,
     POPREG
 };
@@ -35,6 +37,10 @@ struct byteCodeBuffer{ /////
 };
 
 void setSpuCommandsHash();
-int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize);
+int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize);
+
+#if DEBUG_TRANSLATOR
+void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
+#endif /* DEBUG */
 
 #endif /* TRANSLATOR_H */

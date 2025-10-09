@@ -19,6 +19,8 @@ void processorDump(processor* spu){
 
     printf("\tRegs:");
     printRegs(spu->regs);
+
+    getchar();
     printf("\n\n");
 }
 

@@ -12,7 +12,7 @@ unsigned long hashStr(const char* str){
     int curSym = *str;
     while (curSym != END_COMPARISON_STR) {
         curSym = *(str++);
-        hash = ((hash << 5) + hash) ^ curSym;  // hash * 33 ^ c
+        hash = ((hash << 5) + hash) ^ (unsigned long) curSym;  // hash * 33 ^ c
     }
 
     return hash;

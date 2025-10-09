@@ -1,53 +1,43 @@
 #include "translator.h"
 
-#include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 
 ////// redactor this file after prev mentoring
 
-#define DEBUG 0
+#define ON_DEBUG(expression) if(DEBUG_TRANSLATOR){expression;};
 
-#if DEBUG
-static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
-#endif /* DEBUG */
-
-#define ON_DEBUG(expression) if(DEBUG){expression;};
-
-const size_t N_SPU_COMMANDS = 9; //////
 spu_command spu_commands[] = {
-    {"PUSH", PUSH},
-    {"POP", POP},
-    {"PUSHREG", PUSHREG},
-    {"POPREG", POPREG},
-    {"ADD", ADD},
-    {"SUB", SUB},
-    {"MUL", MUL},
-    {"DIV", DIV},
-    {"OUT", OUT}
+    {"PUSH",    0, PUSH},
+    {"POP",     0, POP},
+    {"PUSHREG", 0, PUSHREG},
+    {"POPREG",  0, POPREG},
+    {"ADD",     0, ADD},
+    {"SUB",     0, SUB},
+    {"MUL",     0, MUL},
+    {"DIV",     0, DIV},
+    {"OUT",     0, OUT},
+    {"JMP",     0, JMP}
 };
 
-static bool addStackCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
-static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
-static int  assembleCommand(char* curCommand);
+static bool addStackCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static bool addRegisterCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static int  encodeCommand(char* curCommand);
 
-int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBufferSize){
-    assert(calcCommands);
+/// MENTOR Про перенос в strFunc хочу еще раз обсудить()
+int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize){
+    assert(spuCommandsNames);
     assert(curByteBufferSize);
     
-    int* byteCodeBuffer = (int*) calloc(sizeof(int), calcCommands->nStrings * 2);
-    fprintf(stderr, "byteCodeBuffer size = %lu\n", calcCommands->nStrings * 2);
+    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuCommandsNames->nStrings * 2);
     assert(byteCodeBuffer);
 
-    for(size_t curString = 0; curString < calcCommands->nStrings; curString++){
-        char curCommand[20] = {0}; // 20
-        sscanf(calcCommands->strings[curString].stringPtr, "%s", curCommand);
+    for(size_t curString = 0; curString < spuCommandsNames->nStrings; curString++){
+        char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
+        sscanf(spuCommandsNames->strings[curString].stringPtr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         
-        // assembleCommand (com + arg)
-        // decode / code / encode
-        // assembleCommand command  MENTOR
-        int commandCode = assembleCommand(curCommand); 
+        int commandCode = encodeCommand(curCommand); 
         if(commandCode == ASSEMBLE_FAILURE) continue;
         byteCodeBuffer[*curByteBufferSize] = commandCode;
         
@@ -56,8 +46,8 @@ int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBuffer
         (*curByteBufferSize)++;
 
         // command 
-        addStackCommandsParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
-        addRegisterCommandsParameters(commandCode, calcCommands->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addStackCommandParameters(commandCode, spuCommandsNames->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addRegisterCommandParameters(commandCode, spuCommandsNames->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
 
         ON_DEBUG(printf("\n"))
         
@@ -68,7 +58,7 @@ int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBuffer
 }   
 
 // const
-static bool addStackCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
+static bool addStackCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);
@@ -87,7 +77,7 @@ static bool addStackCommandsParameters(int commandCode, char* stringPtr, int* by
     return true;
 }
 
-static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
+static bool addRegisterCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);
@@ -95,10 +85,10 @@ static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int*
     if((commandCode == PUSHREG) || 
        (commandCode == POPREG)){
 
-        char reg[5]; // 5
+        char reg[REGISTER_NAME_MAX_SIZE];
         sscanf(stringPtr, "%*s %s", reg);
 
-        byteCodeBuffer[*curByteBufferSize] = reg[0] - 'A'; /////
+        byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE; /////
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
         (*curByteBufferSize)++;
     }
@@ -106,15 +96,14 @@ static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int*
     return true;
 }
 
-static int assembleCommand(char* curCommand){
+static int encodeCommand(char* curCommand){
     assert(curCommand);
     unsigned long curCommandHash = hashStr(curCommand);
-    for(size_t curCommandInd = 0; curCommandInd < N_SPU_COMMANDS; curCommandInd++){
+    for(size_t curCommandInd = 0; curCommandInd < sizeof(spu_commands) / sizeof(spu_command); curCommandInd++){
         ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", cmpHashSpuCom(curCommandHash, spu_commands[curCommandInd].hash)))
-
         
-
         if(!cmpHashSpuCom(curCommandHash, spu_commands[curCommandInd].hash)){
+            printf("CurCommandIndex: %lu\n" , curCommandInd);
             ON_DEBUG(printf("Code to return: %d\n", spu_commands[curCommandInd].code))
             return spu_commands[curCommandInd].code;
         }
@@ -124,13 +113,13 @@ static int assembleCommand(char* curCommand){
 }
 
 void setSpuCommandsHash(){
-    for(size_t curCommand = 0; curCommand < N_SPU_COMMANDS; curCommand++){
+    for(size_t curCommand = 0; curCommand < sizeof(spu_commands) / sizeof(spu_command); curCommand++){
         spu_commands[curCommand].hash = hashStr(spu_commands[curCommand].name);
     }
 }
 
-#if DEBUG > 0
-static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize){
+#if DEBUG_TRANSLATOR
+void printByteCodeBuffer(int* buffer, size_t curByteBufferSize){
     assert(buffer);
 
     for(size_t curBufferElemInd = 0; curBufferElemInd < curByteBufferSize; curBufferElemInd++){
