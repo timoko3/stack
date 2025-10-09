@@ -2,18 +2,16 @@
 #include "general/litter.h"
 #include "general/file.h"
 
-calcCommand calcCommands[]{ 
+command commands[]{ 
     {ADD, add},
     {SUB, sub},
     {MUL, mul},
     {DIV, div},
-    {OUT, out}
-}; 
-
-registerCommand registerCommands[]{
+    {OUT, out},
+    {PUSH, push},
     {PUSHREG, pushreg},
     {POPREG,  popreg}
-};
+}; 
 
 processorStatus processorCtor(processor* spu){
     assert(spu);
@@ -46,106 +44,109 @@ bool runProcessor(processor* spu){
 
     bool result = false;
     while(spu->pc < (spu->sizeByteCode / sizeof(int))){
-        if(spu->byteCode[spu->pc] == PUSH){
-            spu->pc++;
-            stack_t pushParameter = spu->byteCode[spu->pc];
-
-            stackPush(&(spu->stk), pushParameter); 
-
-            return true;
-        }
-
-        /// Потом подумать как избавиться от копипаста попробовать избавиться от копипаста
-        for(size_t curRegCommandInd = 0; curRegCommandInd < sizeof(registerCommands) / sizeof(registerCommand); curRegCommandInd++){
-            if(registerCommands[curRegCommandInd].code == spu->byteCode[spu->pc]){
-                registerCommands[curRegCommandInd].command(spu);
+        for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
+            if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
+                commands[curCommandInd].ptr(spu);
 
                 result = true;
                 break;
             }
+            
         }
-
-        for(size_t curCommandInd = 0; curCommandInd < sizeof(calcCommands) / sizeof(calcCommand); curCommandInd++){
-            if(calcCommands[curCommandInd].code == spu->byteCode[spu->pc]){
-                calcCommands[curCommandInd].command(&spu->stk);
-
-                result = true;
-                break;
-            }
-        }
-
+        
         (spu->pc)++;
     }
 
     return result;
 }
 
-bool add(stack* stk){
+bool add(processor* spu){
+    assert(spu);
+
     stack_t term1 = 0;
     stack_t term2 = 0;
 
-    stackPop(stk, &term1);
-    stackPop(stk, &term2);
+    stackPop(&spu->stk, &term1);
+    stackPop(&spu->stk, &term2);
 
-    stackPush(stk, term1 + term2);
+    stackPush(&spu->stk, term1 + term2);
     
     return true;
 }
 
-bool sub(stack* stk){
+bool sub(processor* spu){   
+    assert(spu);
+
     stack_t minuend = 0;
     stack_t subtrahend = 0;
 
-    stackPop(stk, &minuend);
-    stackPop(stk, &subtrahend);
+    stackPop(&spu->stk, &minuend);
+    stackPop(&spu->stk, &subtrahend);
 
-    stackPush(stk, minuend - subtrahend);
+    stackPush(&spu->stk, minuend - subtrahend);
 
     return true;
 }
 
-bool mul(stack* stk){
+bool mul(processor* spu){
+    assert(spu);
+
     stack_t factor1 = 0;
     stack_t factor2 = 0;
 
-    stackPop(stk, &factor1);
-    stackPop(stk, &factor2);
+    stackPop(&spu->stk, &factor1);
+    stackPop(&spu->stk, &factor2);
 
-    stackPush(stk, factor1 * factor2);
+    stackPush(&spu->stk, factor1 * factor2);
 
     return true;
 }
 
-bool div(stack* stk){
+bool div(processor* spu){
+    assert(spu);
+
     stack_t dividend = 0;
     stack_t divider = 0;
 
-    stackPop(stk, &dividend);
-    stackPop(stk, &divider);
+    stackPop(&spu->stk, &dividend);
+    stackPop(&spu->stk, &divider);
 
     if(divider == 0){
         printf("Деление на 0 невозможно\n");
-        stackPush(stk, divider);
-        stackPush(stk, dividend);
+        stackPush(&spu->stk, divider);
+        stackPush(&spu->stk, dividend);
         return false;
     }
-    stackPush(stk, dividend / divider);
+    stackPush(&spu->stk, dividend / divider);
 
     return true;
 }
 
-bool out(stack* stk){
+bool out(processor* spu){
+    assert(spu);
+
     printf("Все элементы стека:\n");
 
     stack_t curElem = 0;
-    while(stackPop(stk, &curElem) != EMPTY_STACK){
-        if(stk->error.type != PROCESS_OK){
+    while(stackPop(&spu->stk, &curElem) != EMPTY_STACK){
+        if(spu->stk.error.type != PROCESS_OK){
             break;
         }
 
         printf("%d ", curElem);
     }
     printf("\n");
+
+    return true;
+}
+
+bool push(processor* spu){
+    assert(spu);
+
+    spu->pc++;
+    stack_t pushParameter = spu->byteCode[spu->pc];
+
+    stackPush(&(spu->stk), pushParameter); 
 
     return true;
 }

@@ -13,27 +13,20 @@ struct processor{
     size_t sizeByteCode;
 };
 
-typedef bool (*calcCommandPtr)(stack*);
+typedef bool (*commandPtr)(processor*);
 
-bool add(stack* stk);
-bool sub(stack* stk);
-bool mul(stack* stk);
-bool div(stack* stk);
-bool out(stack* stk);
-
-struct calcCommand{
-    spuCommandsCodes code; 
-    calcCommandPtr   command;
-};
-
-typedef bool (*registerCommandPtr)(processor*);
-
+bool add(processor* spu);
+bool sub(processor* spu);
+bool mul(processor* spu);
+bool div(processor* spu);
+bool out(processor* spu);
+bool push(processor* spu);
 bool pushreg(processor* spu);
 bool popreg(processor* spu);
 
-struct registerCommand{
-    spuCommandsCodes code;
-    registerCommandPtr command;
+struct command{
+    spuCommandsCodes code; 
+    commandPtr       ptr;
 };
 
 enum processorStatus{
