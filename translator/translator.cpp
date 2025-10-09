@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-/// Нельзя убирать
+////// redactor this file after prev mentoring
+
 #define DEBUG 0
 
 #if DEBUG
@@ -13,7 +14,7 @@ static void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
 
 #define ON_DEBUG(expression) if(DEBUG){expression;};
 
-const size_t N_SPU_COMMANDS = 9;
+const size_t N_SPU_COMMANDS = 9; //////
 spu_command spu_commands[] = {
     {"PUSH", PUSH},
     {"POP", POP},
@@ -44,7 +45,7 @@ int* createByteCodeBuffer(DataFromInputFIle* calcCommands, size_t* curByteBuffer
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         
         // assembleCommand (com + arg)
-        // decode / code 
+        // decode / code / encode
         // assembleCommand command  MENTOR
         int commandCode = assembleCommand(curCommand); 
         if(commandCode == ASSEMBLE_FAILURE) continue;
@@ -97,8 +98,7 @@ static bool addRegisterCommandsParameters(int commandCode, char* stringPtr, int*
         char reg[5]; // 5
         sscanf(stringPtr, "%*s %s", reg);
 
-        /// преобразование имя стека в номер стека
-        byteCodeBuffer[*curByteBufferSize] = reg[0] - 'A';
+        byteCodeBuffer[*curByteBufferSize] = reg[0] - 'A'; /////
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
         (*curByteBufferSize)++;
     }

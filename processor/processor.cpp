@@ -1,9 +1,8 @@
 #include "processor.h"
 #include "general/litter.h"
+#include "general/file.h"
 
-static processorErr getInfoFromByteCodeFile(processor* spu);
-
-processorCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
+calcCommand calcCommands[]{ 
     {ADD, add},
     {SUB, sub},
     {MUL, mul},
@@ -11,50 +10,21 @@ processorCommandsDescription calcCommands[]{ // N_CALC_COMMANDS
     {OUT, out}
 }; 
 
-registerCommandsDescription registerCommands[]{
+registerCommand registerCommands[]{
     {PUSHREG, pushreg},
     {POPREG,  popreg}
 };
 
-processorErr processorCtor(processor* spu){
+processorStatus processorCtor(processor* spu){
     assert(spu);
 
-    stack stackSpu = {0};
-    stackCtor(&stackSpu, 10);
-    spu->stk = stackSpu;
-    getInfoFromByteCodeFile(spu);
-
+    stackCtor(&spu->stk, 10);
     spu->pc = 0;
 
     return SPU_PROCESS_OK;
 }
 
-static processorErr getInfoFromByteCodeFile(processor* spu){
-    assert(spu);
-
-    size_t sizeByteCode = getFileSize(BYTE_CODE_FILE_NAME);
-    spu->byteCode = (int*) calloc(1, sizeByteCode);
-    assert(spu->byteCode);
-
-    spu->sizeByteCode = sizeByteCode;
-
-    fileDescription byteCodeFileDes = 
-    {
-        BYTE_CODE_FILE_NAME,
-        "rb"
-    };
-
-    FILE* byteCodeFile = myOpenFile(&byteCodeFileDes);
-    assert(byteCodeFile);
-
-    fread(spu->byteCode, 1, sizeByteCode, byteCodeFile);
-
-    fclose(byteCodeFile);   
-
-    return SPU_PROCESS_OK;
-}
-
-processorErr processorDtor(processor* spu){
+processorStatus processorDtor(processor* spu){
     assert(spu);
 
     stackDtor(&spu->stk);
@@ -71,40 +41,40 @@ processorErr processorDtor(processor* spu){
     return SPU_PROCESS_OK;
 }
 
-bool completeCommand(processor* spu){
+bool runProcessor(processor* spu){
     assert(spu);
 
     bool result = false;
-    
-    if(spu->byteCode[spu->pc] == PUSH){
-        spu->pc++;
-        stack_t pushParameter = spu->byteCode[spu->pc];
+    while(spu->pc < (spu->sizeByteCode / sizeof(int))){
+        if(spu->byteCode[spu->pc] == PUSH){
+            spu->pc++;
+            stack_t pushParameter = spu->byteCode[spu->pc];
 
-        stackPush(&(spu->stk), pushParameter); 
+            stackPush(&(spu->stk), pushParameter); 
 
-        return true;
-    }
-    // else if(spu->byteCode[spu->pc] == POP){
-
-
-    // }
-
-    for(size_t curRegCommandInd = 0; curRegCommandInd < N_REGISTER_COMMANDS; curRegCommandInd++){
-        if(registerCommands[curRegCommandInd].code == spu->byteCode[spu->pc]){
-            registerCommands[curRegCommandInd].function(spu);
-
-            result = true;
-            break;
+            return true;
         }
-    }
 
-    for(size_t curCommandInd = 0; curCommandInd < N_CALC_COMMANDS; curCommandInd++){
-        if(calcCommands[curCommandInd].code == spu->byteCode[spu->pc]){
-            calcCommands[curCommandInd].function(&spu->stk);
+        /// Потом подумать как избавиться от копипаста попробовать избавиться от копипаста
+        for(size_t curRegCommandInd = 0; curRegCommandInd < sizeof(registerCommands) / sizeof(registerCommand); curRegCommandInd++){
+            if(registerCommands[curRegCommandInd].code == spu->byteCode[spu->pc]){
+                registerCommands[curRegCommandInd].command(spu);
 
-            result = true;
-            break;
+                result = true;
+                break;
+            }
         }
+
+        for(size_t curCommandInd = 0; curCommandInd < sizeof(calcCommands) / sizeof(calcCommand); curCommandInd++){
+            if(calcCommands[curCommandInd].code == spu->byteCode[spu->pc]){
+                calcCommands[curCommandInd].command(&spu->stk);
+
+                result = true;
+                break;
+            }
+        }
+
+        (spu->pc)++;
     }
 
     return result;

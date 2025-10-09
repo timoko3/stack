@@ -382,7 +382,8 @@ unsigned long genHash(stack* stk){
     return hash;
 }
 
-// MENTOR 
+// STL 
+// sizeof(field1) + sizeof(field2) + sizeof(field3) + ...
 static void hashStackStructure(stack* stk, unsigned long* hash){
     size_t curByteInd = 0;
     while(curByteInd < (sizeof(stk->data) + 2 * sizeof(size_t))){

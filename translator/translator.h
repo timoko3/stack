@@ -4,14 +4,14 @@
 #include "general/file.h"
 #include "general/strFunc.h"
 
-#include <stdio.h>
+#include <stdio.h> //////
 
-const char* const TEXT_COMMANDS_FILE_NAME = "translator/calcCommands.txt";   
+const char* const TEXT_COMMANDS_FILE_NAME = "spuCommands.txt";  // in main 
 const char* const BYTE_CODE_FILE_NAME     = "byteCode.asm";
 
 const int ASSEMBLE_FAILURE = -1;
 
-enum spu_commands_codes{
+enum spuCommandsCodes{
     PUSH = 1,
     POP,
     ADD,
@@ -25,12 +25,12 @@ enum spu_commands_codes{
 
 struct spu_command{
     const char* name;
-    spu_commands_codes code;
-    unsigned long hash;
+    unsigned long hash; ////
+    spuCommandsCodes code;
 };
 
-struct byteCodeBuffer{
-    size_t size;
+struct byteCodeBuffer{ /////
+    size_t size; 
     char* pointer;
 };
 

@@ -1,17 +1,19 @@
-#ifndef CALC_H
-#define CALC_H
+#ifndef PROCESSOR_H
+#define PROCESSOR_H
 
-#include <stdio.h>
-
-#include "general/file.h"
 #include "stack/stack.h"
 #include "translator/translator.h"
 
-const size_t N_CALC_COMMANDS     = 5; //
-const size_t N_REGISTER_COMMANDS = 2; //
-const size_t N_REGISTERS         = 10;
+const size_t N_REGISTERS = 10;
+struct processor{
+    stack stk;
+    int regs[N_REGISTERS] = {};
+    size_t pc; // pointer to command
+    int* byteCode;
+    size_t sizeByteCode;
+};
 
-typedef bool (*stackCommand)(stack*);
+typedef bool (*calcCommandPtr)(stack*);
 
 bool add(stack* stk);
 bool sub(stack* stk);
@@ -19,40 +21,27 @@ bool mul(stack* stk);
 bool div(stack* stk);
 bool out(stack* stk);
 
-struct processorCommandsDescription{
-    spu_commands_codes code;
-    stackCommand function;
+struct calcCommand{
+    spuCommandsCodes code; 
+    calcCommandPtr   command;
 };
 
-struct processor{
-    stack stk;
-    int regs[N_REGISTERS] = {};
-    int* byteCode;
-    size_t pc; // pointer to command
-    size_t sizeByteCode;
-};
-
-typedef bool (*registerCommand)(processor*);
+typedef bool (*registerCommandPtr)(processor*);
 
 bool pushreg(processor* spu);
 bool popreg(processor* spu);
 
-struct registerCommandsDescription{
-    spu_commands_codes code;
-    registerCommand function;
+struct registerCommand{
+    spuCommandsCodes code;
+    registerCommandPtr command;
 };
 
-struct stackCommandsDescription{
-    spu_commands_codes code;
-    stackCommand function;
-};
-
-enum processorErr{
+enum processorStatus{
     SPU_PROCESS_OK
 };
 
-processorErr processorCtor(processor* spu);
-processorErr processorDtor(processor* spu);
-bool completeCommand(processor* spu);
+processorStatus processorCtor(processor* spu);
+processorStatus processorDtor(processor* spu);
+bool runProcessor(processor* spu);
 
-#endif /* CALC_H */
+#endif /* PROCESSOR_H */

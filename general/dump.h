@@ -3,4 +3,4 @@
 
 void processorDump(processor* spu);
 
-const size_t N_ELEMENTS_
+// const size_t N_ELEMENTS_

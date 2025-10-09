@@ -23,6 +23,7 @@ int main(void){
     printByteCodeBuffer(byteCodeBuffer, curByteBufferSize);
     #endif /* DEBUG */
 
+    // write 
     createByteCodeFile(byteCodeBuffer, curByteBufferSize);
 
     free(calcCommands.buffer); // 

@@ -65,12 +65,9 @@ FILE* myOpenFile(fileDescription* file){
         perror(FUNCTION_FAILURE_ALERT);
         return NULL;
     }
-
+    
     return filePtr;
 }
-
-// MENTOR FILE* openByteCodeFile(){
-// static FILE* myOpenFile(){
 
 static char* getTextToBuffer(FILE* inputFIle, size_t fileSize){
     assert(inputFIle);
@@ -139,6 +136,18 @@ void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize){
     }
 
     fclose(byteCodeFile);
+}
+
+bool getIntNumsToBuffer(fileDescription file, size_t fileSize, int** buffer){
+    assert(buffer);
+
+    FILE* byteCodeFile = myOpenFile(&file);
+    assert(byteCodeFile);
+
+    fread(*buffer, 1, fileSize, byteCodeFile);
+    fclose(byteCodeFile);
+    
+    return true;
 }
 
 #ifdef DEBUG

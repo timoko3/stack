@@ -18,6 +18,7 @@ unsigned long hashStr(const char* str){
     return hash;
 }
 
+///////
 int cmpHashSpuCom(unsigned long curCommandFromFile, unsigned long curReferenceCommand){
     return (int)(curCommandFromFile - curReferenceCommand);
 }

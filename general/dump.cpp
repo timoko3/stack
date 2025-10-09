@@ -34,7 +34,7 @@ static void simplePrintStack(stack* stk){
 static void printByteCode(int* byteCode, size_t byteCodeSize){
     assert(byteCode);
 
-    for()
+    // for()
 
     for(size_t curByte = 0; curByte < byteCodeSize; curByte++){
         if((curByte % 4) == 0) printf(" ");

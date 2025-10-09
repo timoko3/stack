@@ -1,6 +1,7 @@
 #ifndef STACK_H
 #define STACK_H
 
+///
 #include <stdio.h>
 #include <assert.h>
 #include <malloc.h>
@@ -23,7 +24,7 @@ const int POISON_NUMBER = INT_MAX / 10;
 const size_t STACK_MAX_CAPACITY = 1e9;
 
 #if DEBUG_LEVEL > 1
-const size_t CANARY_PROTECTION_SIZE    = 1; /// 
+const size_t CANARY_PROTECTION_SIZE    = 1;  
 const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
