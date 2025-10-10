@@ -16,12 +16,19 @@ spu_command spu_commands[] = {
     {"SUB",     0, SUB},
     {"MUL",     0, MUL},
     {"DIV",     0, DIV},
+    {"SQRT",    0, SQRT},
     {"OUT",     0, OUT},
-    {"JMP",     0, JMP}
+    {"HLT",     0, HLT},
+    {"JMP",     0, JMP},
+    {"JB",      0, JB},
+    {"JBE",     0, JBE},
+    {"JA",      0, JA},
+    {"JAA",     0, JAA},
+    {"JE",      0, JE},
+    {"JNE",     0, JNE}
 };
 
-static bool addStackCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
-static bool addRegisterCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
+static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static int  encodeCommand(char* curCommand);
 
 /// MENTOR Про перенос в strFunc хочу еще раз обсудить()
@@ -45,9 +52,7 @@ int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBu
         
         (*curByteBufferSize)++;
 
-        // command 
-        addStackCommandParameters(commandCode, spuCommandsNames->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
-        addRegisterCommandParameters(commandCode, spuCommandsNames->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
+        addCommandParameter(commandCode, spuCommandsNames->strings[curString].stringPtr, byteCodeBuffer, curByteBufferSize);
 
         ON_DEBUG(printf("\n"))
         
@@ -57,27 +62,7 @@ int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBu
     return byteCodeBuffer;
 }   
 
-// const
-static bool addStackCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
-    assert(stringPtr);
-    assert(byteCodeBuffer);
-    assert(curByteBufferSize);
-
-    if((commandCode == PUSH) || 
-       (commandCode == POP)){
-
-        int pushParameter = 0;
-        sscanf(stringPtr, "%*s %d", &pushParameter);
-
-        byteCodeBuffer[*curByteBufferSize] = pushParameter;
-        ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
-        (*curByteBufferSize)++;
-    }
-
-    return true;
-}
-
-static bool addRegisterCommandParameters(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
+static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);
@@ -89,6 +74,20 @@ static bool addRegisterCommandParameters(int commandCode, char* stringPtr, int* 
         sscanf(stringPtr, "%*s %s", reg);
 
         byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE; /////
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
+        (*curByteBufferSize)++;
+    }
+    /// Добввить потом структуру
+    else if((commandCode != ADD) &&
+            (commandCode != SUB) &&
+            (commandCode != MUL) &&
+            (commandCode != DIV) &&
+            (commandCode != OUT) &&
+            (commandCode != HLT)){
+        int pushParameter = 0;
+        sscanf(stringPtr, "%*s %d", &pushParameter);
+
+        byteCodeBuffer[*curByteBufferSize] = pushParameter;
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
         (*curByteBufferSize)++;
     }

@@ -18,9 +18,7 @@ int main(void){
     
     processorCtor(&spu1);
 
-    processorDump(&spu1);
     runProcessor(&spu1);
-    processorDump(&spu1);
 
     processorDtor(&spu1);
 }

@@ -19,10 +19,18 @@ enum spuCommandsCodes{
     SUB,
     MUL,
     DIV,
+    SQRT,
     OUT,
+    HLT,
     JMP,
+    JB,
+    JBE,
+    JA,
+    JAA,
+    JE,
+    JNE,
     PUSHREG = 33,
-    POPREG
+    POPREG  = 34
 };
 
 struct spu_command{

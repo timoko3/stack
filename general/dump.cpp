@@ -1,7 +1,8 @@
 #include "dump.h"
+#include "genConsoleColors/consoleColors.h"
 
 static void simplePrintStack(stack* stk);
-static void printByteCode(int* byteCode, size_t byteCodeSize);
+static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
 
 void processorDump(processor* spu){
@@ -14,7 +15,7 @@ void processorDump(processor* spu){
     printf("\n");
 
     printf("\tCode:");
-    printByteCode(spu->byteCode, spu->sizeByteCode);
+    printByteCode(spu->byteCode, spu->sizeByteCode, spu->pc);
     printf("\n");
 
     printf("\tRegs:");
@@ -33,7 +34,7 @@ static void simplePrintStack(stack* stk){
     }
 }
 
-static void printByteCode(int* byteCode, size_t byteCodeSize){
+static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc){
     assert(byteCode);
 
     // for()
@@ -41,7 +42,12 @@ static void printByteCode(int* byteCode, size_t byteCodeSize){
     for(size_t curByte = 0; curByte < byteCodeSize; curByte++){
         if((curByte % 4) == 0) printf(" ");
         if(((curByte % 16) == 0)) printf("\n\t\t");
-        printf("%02x", *((unsigned  char*)(byteCode) + curByte));
+        if((curByte == pc * 4)){
+            printf(SET_STYLE_BOLD_FONT_PURPLE "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+        }
+        else{
+            printf(SET_STYLE_BOLD_FONT_YELLOW "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+        }
     }
 }
 

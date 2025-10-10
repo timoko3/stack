@@ -3,13 +3,20 @@
 #include "general/file.h"
 #include "general/dump.h"
 
+#include <math.h>
+
 command commands[]{ 
-    {ADD, add},
-    {SUB, sub},
-    {MUL, mul},
-    {DIV, div},
-    {OUT, out},
-    {PUSH, push},
+    {ADD,     add},
+    {SUB,     sub},
+    {MUL,     mul},
+    {DIV,     div},
+    {OUT,     out},
+    {PUSH,    push},
+    {JMP,     jmp},
+    {JB,      jb},
+    {JBE,     jbe},
+    {JA,      ja},
+    {JAA,     jaa},
     {PUSHREG, pushreg},
     {POPREG,  popreg}
 }; 
@@ -48,7 +55,7 @@ bool runProcessor(processor* spu){
         for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
             if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
                 commands[curCommandInd].ptr(spu);
-                
+
                 processorDump(spu);
                 result = true;
                 break;
@@ -124,6 +131,23 @@ bool div(processor* spu){
     return true;
 }
 
+bool sqrt(processor* spu){
+    assert(spu);
+
+    stack_t radicalExpression = 0;
+
+    stackPop(&spu->stk, &radicalExpression);
+
+    if(radicalExpression < 0){
+        printf("Взятие корня из числа меньше 0 невозможно\n");
+        stackPush(&spu->stk, radicalExpression);
+        return false;
+    }
+    stackPush(&spu->stk, sqrt(radicalExpression));
+
+    return true;
+}
+
 bool out(processor* spu){
     assert(spu);
 
@@ -142,6 +166,128 @@ bool out(processor* spu){
     return true;
 }
 
+bool jmp(processor* spu){
+    assert(spu);
+
+    spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+
+    return true;
+}
+
+bool jb(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
+
+    if(superiorStackElem < preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);   
+
+    return true;
+}
+
+bool jbe(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
+
+    if(superiorStackElem <= preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);   
+
+    return true;
+}
+
+bool ja(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);      
+
+    if(superiorStackElem > preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+
+    return true;
+}
+
+bool jaa(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
+
+    if(superiorStackElem >= preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);   
+
+    return true;
+}
+
+bool je(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
+
+    if(superiorStackElem == preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);   
+
+    return true;
+}
+
+bool jne(processor* spu){
+    assert(spu);
+
+    stack_t superiorStackElem = 0;
+    stack_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
+
+    if(superiorStackElem != preSuperiorStackElem){
+        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    }
+
+    stackPush(&spu->stk, preSuperiorStackElem);
+    stackPush(&spu->stk, superiorStackElem);   
+
+    return true;
+}
+
 bool push(processor* spu){
     assert(spu);
 
@@ -156,8 +302,11 @@ bool push(processor* spu){
 bool pushreg(processor* spu){
     assert(spu);
 
-    stack_t curReg = spu->regs[spu->byteCode[spu->pc + 1]];
+    int curReg = spu->regs[spu->byteCode[spu->pc + 1]];
+    printf("curReg : %d\n", curReg);
     stackPush(&spu->stk, curReg);
+
+    (spu->pc)++;
 
     return true; 
 }
@@ -166,6 +315,8 @@ bool popreg(processor* spu){
     assert(spu);
 
     stackPop(&spu->stk, &(spu->regs[spu->byteCode[spu->pc + 1]]));
+
+    (spu->pc)++;
 
     return true; 
 }
