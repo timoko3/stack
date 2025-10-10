@@ -36,8 +36,6 @@ static stackErr canaryCheck(stack* stk);
 #if DEBUG_LEVEL > 2
 
 unsigned long genHash(stack* stk);
-static void hashStackStructure(stack* stk, unsigned long* hash);
-static void hashData(stack* stk, unsigned long* hash);
 static stackErr checkHash(stack* stk);
 
 #endif /* DEBUG */
@@ -372,8 +370,11 @@ unsigned long genHash(stack* stk){
 
     unsigned long hash = 5381;
 
-    hashStackStructure(stk, &hash); // struct
-    hashData(stk, &hash);
+    size_t curByteInd = 0;
+    while(curByteInd < (sizeof(stk->data) + 2 * sizeof(size_t) + sizeof(stk->capacity))){
+        hash = ((hash << 5) + hash) + (unsigned char) (*((char*)stk + curByteInd));
+        curByteInd++;
+    }
 
     #if DEBUG_LEVEL > 3
     printf("CurHash: %lu\n", hash);
@@ -384,25 +385,6 @@ unsigned long genHash(stack* stk){
 
 // STL 
 // sizeof(field1) + sizeof(field2) + sizeof(field3) + ...
-static void hashStackStructure(stack* stk, unsigned long* hash){
-    size_t curByteInd = 0;
-    while(curByteInd < (sizeof(stk->data) + 2 * sizeof(size_t))){
-        #if DEBUG_LEVEL > 3
-        printf("Current adress: %p\n", (((char*)stk + curByteInd)));
-        #endif
-
-        *hash = ((*hash << 5) + *hash) + (unsigned char) (*((char*)stk + curByteInd));
-        curByteInd++;
-    }
-}
-
-static void hashData(stack* stk, unsigned long* hash){
-    size_t curDataInd = 0;
-    while(curDataInd < stk->capacity){
-        *hash = ((*hash << 5) + *hash) + (unsigned long) stk->data[curDataInd];
-        curDataInd++;
-    }
-}
 
 static stackErr checkHash(stack* stk){
     assert(stk);

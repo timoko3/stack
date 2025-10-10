@@ -36,8 +36,10 @@ int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBu
     assert(spuCommandsNames);
     assert(curByteBufferSize);
     
-    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuCommandsNames->nStrings * 2);
+    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuCommandsNames->nStrings * 2 + PREAMBLE_SIZE);
     assert(byteCodeBuffer);
+
+    
 
     for(size_t curString = 0; curString < spuCommandsNames->nStrings; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
