@@ -1,19 +1,21 @@
 #include "stack.h"
 #include "general/litter.h"
 #include <stdint.h>
+#include "general/hash.h"
 
 #define ON_DEBUG_LEVEL_4(expression) if(DEBUG_LEVEL > 3){expression};
 
-struct errorDescription errors[AMOUNT_ERROR_TYPES]{ // AMOUNT_ERROR_TYPES
-    {PROCESS_OK,             "Все хорошо\n"},
-    {CAPACITY_EXCEEDS_LIMIT, "Значение capacity превышает максимально возможное\n"}, 
-    {NULL_POINTER,           "Указатели не должны быть нулевыми\n"},
-    {CAPACITY_IS_ZERO,       "capacity равно 0\n"}, 
-    {BAD_MEMORY_ALLOCATION,  "Некорректное выделение памяти\n"},
-    {SIZE_EXCEEDS_CAPACITY,  "Размер стека превышает объем выделяемой памяти\n"},
-    {CANARY_TORTURE,         "Канарейка была замучена до смерти\n"},
-    {EMPTY_STACK,            "Стэк опустел и получение элемента не возможно\n"}, 
-    {UNPLANNED_STACK_CHANGE, "Стек несакнкционированно изменен извне\n"}
+struct errorDescription errors[]{ 
+    {PROCESS_OK,                    "Все хорошо\n"},
+    {CAPACITY_EXCEEDS_LIMIT,        "Значение capacity превышает максимально возможное\n"}, 
+    {NULL_POINTER,                  "Указатели не должны быть нулевыми\n"},
+    {CAPACITY_IS_ZERO,              "capacity равно 0\n"}, 
+    {BAD_MEMORY_ALLOCATION,         "Некорректное выделение памяти\n"},
+    {SIZE_EXCEEDS_CAPACITY,         "Размер стека превышает объем выделяемой памяти\n"},
+    {CANARY_TORTURE,                "Канарейка была замучена до смерти\n"},
+    {EMPTY_STACK,                   "Стэк опустел и получение элемента не возможно\n"}, 
+    {UNPLANNED_STACK_CHANGE,        "Стек несакнкционированно изменен извне\n"},
+    {UNPLANNED_STACK_STRUCT_CHANGE, "Структура стека несанкционированно изменена\n"}
 };
 
 static void InitializeStackBuffer(stack* stk, size_t startStackInd);
@@ -35,7 +37,7 @@ static stackErr canaryCheck(stack* stk);
 
 #if DEBUG_LEVEL > 2
 
-unsigned long genHash(stack* stk);
+static bool genStackHash(stack* stk);
 static stackErr checkHash(stack* stk);
 
 #endif /* DEBUG */
@@ -45,17 +47,6 @@ static stackErr checkHash(stack* stk);
 void print_mem_hex(const void *ptr, size_t size);
 
 #endif /* DEBUG */
-
-// MENTOR
-// struct {
-//     ...
-//     ...
-//     ...
-//     ...
-//     ha
-// }
-
-// sizeof(field1) + sizeof(field2) + sizeof(field3) + ...
 
 stackErr stackCtor(stack* stk, size_t capacity){
     assert(stk);
@@ -133,7 +124,7 @@ stackErr stackPush(stack* stk, stack_t value){
     (stk->size)++;
 
     #if DEBUG_LEVEL > 2
-    stk->hash = genHash(stk);
+    genStackHash(stk);
     #endif
 
     #if DEBUG_LEVEL > 0
@@ -142,15 +133,6 @@ stackErr stackPush(stack* stk, stack_t value){
 
     return PROCESS_OK;
 }
-
-// size 5
-// cap 8
-// 5 8 0
-// hash 13
-// 5 8 13
-// ...
-// 5 8 13
-// hash 
 
 stackErr stackPop(stack* stk, stack_t* stackElem){
     assert(stackElem);
@@ -177,7 +159,7 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     (stk->size)--;
 
     #if DEBUG_LEVEL > 2
-    stk->hash = genHash(stk);
+    genStackHash(stk);
     #endif /* DEBUG */
 
     #if DEBUG_LEVEL > 0
@@ -195,14 +177,15 @@ stackErr stackDtor(stack* stk){
     }
     stk->size = (size_t) rand();
     stk->capacity = (size_t) rand();
-    litterMemory(&stk->error, sizeof(stk->error));
+    poisonMemory(&stk->error, sizeof(stk->error));
 
     #if DEBUG_LEVEL > 1
-    litterMemory(&stk->canaryStatus, sizeof(stk->canaryStatus));
+    poisonMemory(&stk->canaryStatus, sizeof(stk->canaryStatus));
     #endif /* DEBUG */
 
     #if DEBUG_LEVEL > 2
-    litterMemory(&stk->hash, sizeof(stk->hash));
+    poisonMemory(&stk->hashData,   sizeof(stk->hashData));
+    poisonMemory(&stk->hashStruct, sizeof(stk->hashStruct));
     #endif
 
     free(stk->data);
@@ -219,7 +202,7 @@ static void InitializeStackBuffer(stack* stk, size_t startStackInd){
     }
 
     #if DEBUG_LEVEL > 2
-    stk->hash = genHash(stk);
+    genStackHash(stk);
     #endif
 }
 
@@ -269,7 +252,7 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
 static void assignErrorStruct(stack* stk, stackErr type){
     assert(stk);
 
-    for(size_t curErrInd = 0; curErrInd < AMOUNT_ERROR_TYPES; curErrInd++){
+    for(size_t curErrInd = 0; curErrInd < sizeof(errors) / sizeof(errorDescription); curErrInd++){
         if(errors[curErrInd].type == type){
             stk->error = errors[curErrInd];
         }
@@ -340,7 +323,7 @@ static void setCanaryProtection(stack* stk){
     stk->canaryStatus = true;
 
     #if DEBUG_LEVEL > 2
-    stk->hash = genHash(stk);
+    genStackHash(stk);
     #endif
 }
 
@@ -360,7 +343,7 @@ static stackErr canaryCheck(stack* stk){
 
 #if DEBUG_LEVEL > 2
 
-unsigned long genHash(stack* stk){
+static bool genStackHash(stack* stk){
     assert(stk);
     
     #if DEBUG_LEVEL >= 4
@@ -368,30 +351,31 @@ unsigned long genHash(stack* stk){
     // ON_DEBUG_LEVEL_4(print_mem_hex(stk, sizeof(*stk));)
     #endif /* DEBUG */
 
-    unsigned long hash = 5381;
-
-    size_t curByteInd = 0;
-    while(curByteInd < (sizeof(stk->data) + 2 * sizeof(size_t) + sizeof(stk->capacity))){
-        hash = ((hash << 5) + hash) + (unsigned char) (*((char*)stk + curByteInd));
-        curByteInd++;
-    }
+    stk->hashStruct = hash(stk, sizeof(stk->data) + 2 * sizeof(size_t)); 
+    stk->hashData   = hash(stk->data, sizeof(stk->data));
 
     #if DEBUG_LEVEL > 3
     printf("CurHash: %lu\n", hash);
     #endif /* DEBUG */
 
-    return hash;
+    return true;
 }
-
-// STL 
-// sizeof(field1) + sizeof(field2) + sizeof(field3) + ...
 
 static stackErr checkHash(stack* stk){
     assert(stk);
 
-    if(stk->hash != genHash(stk)){
+    unsigned long curDataHash   = stk->hashData;
+    unsigned long curStructHash = stk->hashStruct;
+    genStackHash(stk);
+
+
+    if(stk->hashData != curDataHash){
         assignErrorStruct(stk, UNPLANNED_STACK_CHANGE);
         return UNPLANNED_STACK_CHANGE;
+    }
+    else if(stk->hashStruct != curStructHash){
+        assignErrorStruct(stk, UNPLANNED_STACK_STRUCT_CHANGE);
+        return UNPLANNED_STACK_STRUCT_CHANGE;
     }
 
     return PROCESS_OK;

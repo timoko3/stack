@@ -2,4 +2,4 @@
 #include <assert.h>
 #include <stdlib.h>
 
-void litterMemory(void* ptr, size_t sizeToPollute);
+void poisonMemory(void* ptr, size_t sizeToPollute);

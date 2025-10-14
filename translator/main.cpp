@@ -22,7 +22,7 @@ int main(/*int argc, char* argv[]*/){
     setSpuCommandsHash();
 
     DataFromInputFIle spuCommandsNames;
-    stringsFromFileToFileDataStructure(&spuCommandsNames, (const char*) textCommandsFileName);
+    parseStringsFile(&spuCommandsNames, (const char*) textCommandsFileName); 
     
     size_t curByteBufferSize = 0;
     int* byteCodeBuffer = createByteCodeBuffer(&spuCommandsNames, &curByteBufferSize);

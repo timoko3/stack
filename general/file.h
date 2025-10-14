@@ -3,12 +3,13 @@
 
 #include "strFunc.h"
 
-//MENTOR 
+#include <stdio.h> /// bez nego nikak
+
+//MENTOR ????
 const char* const ALERT_FILE_OPEN_FAILURE               = "Ошибка при открытии файла %s\n";
 const char* const ALERT_GET_INFO_FAILURE                = "Ошибка при попытке получить информацию о файле\n";
 const char* const ALERT_STR_FROM_FILE_TO_STRUCT_FAILURE = "Ошибка при передаче информации о файле в структуру\n";
 
-// FUNC
 const char* const FUNCTION_FAILURE_ALERT = "failed";
 
 struct DataFromInputFIle {
@@ -25,7 +26,7 @@ struct fileDescription {
     const char* openMode;
 };
 
-int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle, const char* fileName);
+int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName);
 
 size_t getFileSize(const char* fileName);
 FILE* myOpenFile(fileDescription* file);

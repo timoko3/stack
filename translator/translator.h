@@ -10,7 +10,7 @@ const size_t COMMAND_NAME_MAX_SIZE  = 10;
 const size_t REGISTER_NAME_MAX_SIZE = 5;
 const size_t PREAMBLE_SIZE          = 2;
 const int A_ASCII_CODE              = (int) 'A';
-const int ASSEMBLE_FAILURE = -1;
+const int ASSEMBLE_FAILURE          = -1;
 
 const int SIGNATURE = 999;
 const int VERSION   = 1;
@@ -38,13 +38,8 @@ enum spuCommandsCodes{
 
 struct spu_command{
     const char* name;
-    unsigned long hash; ////
+    unsigned long hash;
     spuCommandsCodes code;
-};
-
-struct byteCodeBuffer{ /////
-    size_t size; 
-    char* pointer;
 };
 
 void setSpuCommandsHash();

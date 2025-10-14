@@ -1,7 +1,6 @@
 #ifndef STACK_H
 #define STACK_H
 
-///
 #include <stdio.h>
 #include <assert.h>
 #include <malloc.h>
@@ -11,7 +10,7 @@
 #include "genConsoleColors/consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 0
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0
@@ -24,7 +23,7 @@ const int POISON_NUMBER = INT_MAX / 10;
 const size_t STACK_MAX_CAPACITY = 1e9;
 
 #if DEBUG_LEVEL > 1
-const size_t CANARY_PROTECTION_SIZE    = 1;  
+const size_t  CANARY_PROTECTION_SIZE   = 1;  
 const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
@@ -44,6 +43,7 @@ enum stackErr{
     CANARY_TORTURE,
     EMPTY_STACK,
     UNPLANNED_STACK_CHANGE,
+    UNPLANNED_STACK_STRUCT_CHANGE,
     PROCESS_OK
 };
 
@@ -51,8 +51,6 @@ struct errorDescription{
     stackErr type;
     const char* text;
 };
-
-const int AMOUNT_ERROR_TYPES = 9;
 
 // #pragma pack(push, 1)
 struct stack{
@@ -64,7 +62,8 @@ struct stack{
     bool canaryStatus = false;
     #endif
     #if DEBUG_LEVEL > 2
-    unsigned long hash;
+    unsigned long hashStruct;
+    unsigned long hashData;
     #endif
 };
 // #pragma pack(pop)

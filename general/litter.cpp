@@ -1,6 +1,6 @@
 #include "litter.h"
 
-void litterMemory(void* ptr, size_t sizeToPollute){
+void poisonMemory(void* ptr, size_t sizeToPollute){
     assert(ptr);
     char* toPollute = (char*) ptr;
 

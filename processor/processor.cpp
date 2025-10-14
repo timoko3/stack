@@ -21,28 +21,21 @@ command commands[]{
     {POPREG,  popreg}
 }; 
 
-processorStatus processorCtor(processor* spu){
+processorStatus processorCtor(processor* spu, const char* fileName){
     assert(spu);
+
+    spu->sizeByteCode = getFileSize(fileName);
+    spu->byteCode = (int*) calloc(1, spu->sizeByteCode);
+    assert(spu1.byteCode);
+
+    fileDescription byteCodeFileDes = {
+        fileName,
+        "rb"
+    };
+    getIntNumsToBuffer(byteCodeFileDes, spu->sizeByteCode, &spu->byteCode);
 
     stackCtor(&spu->stk, 10);
     spu->pc = 0;
-
-    return SPU_PROCESS_OK;
-}
-
-processorStatus processorDtor(processor* spu){
-    assert(spu);
-
-    stackDtor(&spu->stk);
-
-    litterMemory(spu->byteCode, spu->sizeByteCode);
-    free(spu->byteCode);
-    spu->byteCode = NULL;
-
-    litterMemory(spu->regs, sizeof(spu->regs));
-    
-    spu->pc = (size_t) rand();
-    spu->sizeByteCode = (size_t) rand();
 
     return SPU_PROCESS_OK;
 }
@@ -52,21 +45,40 @@ bool runProcessor(processor* spu){
 
     bool result = false;
     while(spu->pc < (spu->sizeByteCode / sizeof(int))){
-        for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
-            if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
-                commands[curCommandInd].ptr(spu);
-
-                processorDump(spu);
-                result = true;
-                break;
-            }
-            
-        }
-        
+        executeCommand(spu);
         (spu->pc)++;
     }
 
     return result;
+}
+
+bool executeCommand(processor* spu){
+    for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
+        if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
+            commands[curCommandInd].ptr(spu);
+
+            processorDump(spu);
+            break;
+        } 
+    }
+    return true;
+}
+
+processorStatus processorDtor(processor* spu){
+    assert(spu);
+
+    stackDtor(&spu->stk);
+
+    poisonMemory(spu->byteCode, spu->sizeByteCode);
+    free(spu->byteCode);
+    spu->byteCode = NULL;
+
+    poisonMemory(spu->regs, sizeof(spu->regs));
+    
+    spu->pc = (size_t) rand();
+    spu->sizeByteCode = (size_t) rand();
+
+    return SPU_PROCESS_OK;
 }
 
 bool add(processor* spu){
@@ -227,7 +239,6 @@ bool ja(processor* spu){
         spu->pc = (size_t) spu->byteCode[spu->pc + 1];
     }
 
-
     return true;
 }
 
@@ -291,10 +302,10 @@ bool jne(processor* spu){
 bool push(processor* spu){
     assert(spu);
 
-    spu->pc++;
-    stack_t pushParameter = spu->byteCode[spu->pc];
-
+    stack_t pushParameter = spu->byteCode[spu->pc + 1];
     stackPush(&(spu->stk), pushParameter); 
+
+    spu->pc++;
 
     return true;
 }

@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 
 // #define DEBUG
 
@@ -15,7 +14,7 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 static void printBuffer(char* buffer);
 #endif /* DEBUG */
 
-int stringsFromFileToFileDataStructure(DataFromInputFIle* DataFromInputFIle, const char* fileName){
+int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName){
     assert(DataFromInputFIle);
 
     if((DataFromInputFIle->fileSize = getFileSize(fileName)) == EXIT_FAILURE) return EXIT_FAILURE;
@@ -71,14 +70,13 @@ FILE* myOpenFile(fileDescription* file){
 
 static char* getTextToBuffer(FILE* inputFIle, size_t fileSize){
     assert(inputFIle);
-    
+
     char* buffer = (char*) calloc(fileSize + SIZE_OF_END_FILE, sizeof(char)); 
     assert(buffer);
-    buffer[fileSize] = '\n';
-    buffer[fileSize + 1] = '\0';
+    buffer[fileSize] = '\0';
 
     fread(buffer, sizeof(char), fileSize, inputFIle);
-    // MENTOR return buffer
+    
     return buffer;
 }
 

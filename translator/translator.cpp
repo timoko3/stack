@@ -1,4 +1,5 @@
 #include "translator.h"
+#include "general/hash.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -38,8 +39,6 @@ int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBu
     
     int* byteCodeBuffer = (int*) calloc(sizeof(int), spuCommandsNames->nStrings * 2 + PREAMBLE_SIZE);
     assert(byteCodeBuffer);
-
-    
 
     for(size_t curString = 0; curString < spuCommandsNames->nStrings; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
@@ -99,12 +98,12 @@ static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeB
 
 static int encodeCommand(char* curCommand){
     assert(curCommand);
-    unsigned long curCommandHash = hashStr(curCommand);
+
+    unsigned long curCommandHash = hash(curCommand, myStrLen(curCommand, '\0'));
     for(size_t curCommandInd = 0; curCommandInd < sizeof(spu_commands) / sizeof(spu_command); curCommandInd++){
-        ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", cmpHashSpuCom(curCommandHash, spu_commands[curCommandInd].hash)))
+        ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", curCommandHash == spu_commands[curCommandInd].hash))
         
-        if(!cmpHashSpuCom(curCommandHash, spu_commands[curCommandInd].hash)){
-            printf("CurCommandIndex: %lu\n" , curCommandInd);
+        if(curCommandHash == spu_commands[curCommandInd].hash){
             ON_DEBUG(printf("Code to return: %d\n", spu_commands[curCommandInd].code))
             return spu_commands[curCommandInd].code;
         }
@@ -115,7 +114,7 @@ static int encodeCommand(char* curCommand){
 
 void setSpuCommandsHash(){
     for(size_t curCommand = 0; curCommand < sizeof(spu_commands) / sizeof(spu_command); curCommand++){
-        spu_commands[curCommand].hash = hashStr(spu_commands[curCommand].name);
+        spu_commands[curCommand].hash = hash(spu_commands[curCommand].name, myStrLen(spu_commands[curCommand].name, '\0'));
     }
 }
 

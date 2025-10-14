@@ -25,12 +25,13 @@ bool jmp(processor* spu);
 bool jb(processor* spu);
 bool jbe(processor* spu);
 bool ja(processor* spu);
-bool jaa(processor* spu);
+bool jaa(processor* spu); //
 bool je(processor* spu);
 bool jne(processor* spu);
 bool push(processor* spu);
 bool pushreg(processor* spu);
 bool popreg(processor* spu);
+// args...
 
 struct command{
     spuCommandsCodes code; 
@@ -41,8 +42,9 @@ enum processorStatus{
     SPU_PROCESS_OK
 };
 
-processorStatus processorCtor(processor* spu);
+processorStatus processorCtor(processor* spu, const char* fileName);
 processorStatus processorDtor(processor* spu);
 bool runProcessor(processor* spu);
+bool executeCommand(processor* spu);
 
 #endif /* PROCESSOR_H */
