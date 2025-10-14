@@ -12,11 +12,13 @@ command commands[]{
     {DIV,     div},
     {OUT,     out},
     {PUSH,    push},
-    {JMP,     jmp},
-    {JB,      jb},
-    {JBE,     jbe},
-    {JA,      ja},
-    {JAA,     jaa},
+    {JMP,     jmpCond},
+    {JB,      jmpCond},
+    {JBE,     jmpCond},
+    {JA,      jmpCond},
+    {JAE,     jmpCond},
+    {JE,      jmpCond},
+    {JNE,     jmpCond},
     {PUSHREG, pushreg},
     {POPREG,  popreg}
 }; 
@@ -155,7 +157,7 @@ bool sqrt(processor* spu){
         stackPush(&spu->stk, radicalExpression);
         return false;
     }
-    stackPush(&spu->stk, sqrt(radicalExpression));
+    stackPush(&spu->stk, (stack_t) sqrt(radicalExpression));
 
     return true;
 }
@@ -186,7 +188,7 @@ bool jmp(processor* spu){
     return true;
 }
 
-bool jb(processor* spu){
+bool jmpCond(processor* spu){
     assert(spu);
 
     stack_t superiorStackElem = 0;
@@ -195,106 +197,22 @@ bool jb(processor* spu){
     stackPop(&spu->stk, &superiorStackElem);
     stackPop(&spu->stk, &preSuperiorStackElem);    
 
-    if(superiorStackElem < preSuperiorStackElem){
+    int jumpSign = spu->byteCode[spu->pc];
+
+    bool doJump = false;
+    switch(jumpSign){
+        case JB : if(superiorStackElem <  preSuperiorStackElem)doJump = true;  break;  
+        case JBE: if(superiorStackElem <= preSuperiorStackElem)doJump = true;  break;  
+        case JA : if(superiorStackElem >  preSuperiorStackElem)doJump = true;  break;
+        case JAE: if(superiorStackElem >= preSuperiorStackElem)doJump = true;  break; 
+        case JE : if(superiorStackElem == preSuperiorStackElem)doJump = true;  break; 
+        case JNE: if(superiorStackElem != preSuperiorStackElem)doJump = true;  break; 
+        default : doJump = false;
+    }
+    
+    if(doJump){
         spu->pc = (size_t) spu->byteCode[spu->pc + 1];
     }
-
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);   
-
-    return true;
-}
-
-bool jbe(processor* spu){
-    assert(spu);
-
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);    
-
-    if(superiorStackElem <= preSuperiorStackElem){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
-    }
-
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);   
-
-    return true;
-}
-
-bool ja(processor* spu){
-    assert(spu);
-
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);      
-
-    if(superiorStackElem > preSuperiorStackElem){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
-    }
-
-    return true;
-}
-
-bool jaa(processor* spu){
-    assert(spu);
-
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);    
-
-    if(superiorStackElem >= preSuperiorStackElem){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
-    }
-
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);   
-
-    return true;
-}
-
-bool je(processor* spu){
-    assert(spu);
-
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);    
-
-    if(superiorStackElem == preSuperiorStackElem){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
-    }
-
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);   
-
-    return true;
-}
-
-bool jne(processor* spu){
-    assert(spu);
-
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);    
-
-    if(superiorStackElem != preSuperiorStackElem){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
-    }
-
-    stackPush(&spu->stk, preSuperiorStackElem);
-    stackPush(&spu->stk, superiorStackElem);   
 
     return true;
 }

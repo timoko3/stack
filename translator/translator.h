@@ -29,7 +29,7 @@ enum spuCommandsCodes{
     JB,
     JBE,
     JA,
-    JAA,
+    JAE,
     JE,
     JNE,
     PUSHREG = 33,

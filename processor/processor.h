@@ -22,12 +22,7 @@ bool div(processor* spu);
 bool sqrt(processor* spu);
 bool out(processor* spu);
 bool jmp(processor* spu);
-bool jb(processor* spu);
-bool jbe(processor* spu);
-bool ja(processor* spu);
-bool jaa(processor* spu); //
-bool je(processor* spu);
-bool jne(processor* spu);
+bool jmpCond(processor* spu);
 bool push(processor* spu);
 bool pushreg(processor* spu);
 bool popreg(processor* spu);

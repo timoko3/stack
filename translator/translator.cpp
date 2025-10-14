@@ -24,7 +24,7 @@ spu_command spu_commands[] = {
     {"JB",      0, JB},
     {"JBE",     0, JBE},
     {"JA",      0, JA},
-    {"JAA",     0, JAA},
+    {"JAA",     0, JAE},
     {"JE",      0, JE},
     {"JNE",     0, JNE}
 };
