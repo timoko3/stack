@@ -9,15 +9,9 @@
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
 
-int main(/*int argc, char* argv[]*/){
-    const char* textCommandsFileName   = "spuCommands.txt"; 
-    const char* outputByteCodeFileName = "byteCode.asm";
-    // if((argc > 2) && (argv[1] == FLAG_INPUT_FILE)){
-    //     textCommandsFileName = argv[2];
-    //     if((argc > 4) && (argv[3] == FLAG_OUTPUT_FILE)){
-    //         outputByteCodeFileName = argv[4];
-    //     }
-    // }
+int main(){
+    const char* textCommandsFileName   = "test.txt"; 
+    const char* outputByteCodeFileName = "test.asm";
 
     setSpuCommandsHash();
 
