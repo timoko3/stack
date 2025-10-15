@@ -16,6 +16,7 @@ const int SIGNATURE    = 999;
 const int VERSION      = 1;
 const int LABEL_POISON = 46878756;
 const size_t N_LABELS  = 10;
+const size_t N_REGISTERS = 10;
 
 enum spuCommandsCodes{
     PUSH = 1,

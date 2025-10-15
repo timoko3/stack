@@ -97,14 +97,23 @@ static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeB
     assert(curByteBufferSize);
 
     if((commandCode == PUSHREG) || 
-       (commandCode == POPREG)  ||
-       (commandCode == RET)){
+       (commandCode == POPREG)){
         char reg[REGISTER_NAME_MAX_SIZE];
         sscanf(stringPtr, "%*s %s", reg);
-        
-        byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE;
+
+        if (reg[0] == 'R'){
+            printf("MEOW\n");
+            byteCodeBuffer[*curByteBufferSize] = N_REGISTERS - 1;
+        }
+        else{
+            byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE;
+        }
 
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
+        (*curByteBufferSize)++;
+    }
+    else if((commandCode == RET)){
+        byteCodeBuffer[*curByteBufferSize] = N_REGISTERS - 1;
         (*curByteBufferSize)++;
     }
     /// добавить структуры

@@ -1,0 +1,21 @@
+PUSH 8
+PUSH 1
+POPREG AX ;In AX the result is stored
+POPREG BX ;In BX curN
+CALL :1
+OUT
+HLT
+:1   ;factorial function
+PUSHREG BX ; dostaem pervoe znachenie N
+PUSH 1     ; decrimentation N
+PUSHREG BX ; decrimentation N
+SUB        ; decrimentation N
+POPREG BX  ; decrimentation N
+PUSH 1     ; if begin
+PUSHREG BX ;
+JBE :2     ; if end
+CALL :1
+MUL
+RET
+:2
+RET

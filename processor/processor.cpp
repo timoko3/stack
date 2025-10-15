@@ -241,6 +241,8 @@ bool callFunc(processor* spu){
 bool returnFunc(processor* spu){
     assert(spu);
 
+    // popreg(spu);
+
     stack_t retAddr = 0;
     stackPop(&(spu->funcRetAddr), &retAddr);
     spu->pc = (size_t) retAddr;

@@ -2,7 +2,7 @@
 #include "general/dump.h"
 
 int main(void){
-    const char* byteCodeInputFile = "test.asm";
+    const char* byteCodeInputFile = "factorial.asm";
 
     processor spu1; 
     processorCtor(&spu1, byteCodeInputFile);

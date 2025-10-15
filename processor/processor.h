@@ -4,7 +4,7 @@
 #include "stack/stack.h"
 #include "translator/translator.h"
 
-const size_t N_REGISTERS = 10;
+
 struct processor{
     stack stk;
     stack funcRetAddr;

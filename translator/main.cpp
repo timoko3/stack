@@ -10,8 +10,8 @@ const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
 
 int main(){
-    const char* textCommandsFileName   = "test.txt"; 
-    const char* outputByteCodeFileName = "test.asm";
+    const char* textCommandsFileName   = "factorial.txt"; 
+    const char* outputByteCodeFileName = "factorial.asm";
 
     setSpuCommandsHash();
 
