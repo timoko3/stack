@@ -100,7 +100,7 @@ static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeB
        (commandCode == POPREG)){
         char reg[REGISTER_NAME_MAX_SIZE];
         sscanf(stringPtr, "%*s %s", reg);
-
+        printf("reg[0] = %c\n", reg[0]);
         if (reg[0] == 'R'){
             printf("MEOW\n");
             byteCodeBuffer[*curByteBufferSize] = N_REGISTERS - 1;
@@ -138,7 +138,6 @@ static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeB
         }
         
     }
-
 
     else if((commandCode != ADD) &&
             (commandCode != SUB) &&

@@ -225,6 +225,9 @@ bool jmpCond(processor* spu){
     if(doJump){
         spu->pc = (size_t) spu->byteCode[spu->pc + 1];
     }
+    else{
+        (spu->pc)++;
+    }
 
     return true;
 }
@@ -241,7 +244,7 @@ bool callFunc(processor* spu){
 bool returnFunc(processor* spu){
     assert(spu);
 
-    // popreg(spu);
+    popreg(spu);
 
     stack_t retAddr = 0;
     stackPop(&(spu->funcRetAddr), &retAddr);

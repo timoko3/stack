@@ -1,8 +1,9 @@
-PUSH 8
+PUSH 6
 PUSH 1
 POPREG AX ;In AX the result is stored
 POPREG BX ;In BX curN
 CALL :1
+PUSHREG RX
 OUT
 HLT
 :1   ;factorial function
@@ -15,6 +16,7 @@ PUSH 1     ; if begin
 PUSHREG BX ;
 JBE :2     ; if end
 CALL :1
+PUSHREG RX
 MUL
 RET
 :2
