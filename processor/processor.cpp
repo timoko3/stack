@@ -11,6 +11,7 @@ command commands[]{
     {MUL,     mul},
     {DIV,     div},
     {OUT,     out},
+    {HLT,     hlt},
     {PUSH,    push},
     {JMP,     jmpCond},
     {JB,      jmpCond},
@@ -20,7 +21,9 @@ command commands[]{
     {JE,      jmpCond},
     {JNE,     jmpCond},
     {PUSHREG, pushreg},
-    {POPREG,  popreg}
+    {POPREG,  popreg},
+    {CALL, callFunc},
+    {RET, returnFunc}
 }; 
 
 processorStatus processorCtor(processor* spu, const char* fileName){
@@ -37,6 +40,7 @@ processorStatus processorCtor(processor* spu, const char* fileName){
     getIntNumsToBuffer(byteCodeFileDes, spu->sizeByteCode, &spu->byteCode);
 
     stackCtor(&spu->stk, 10);
+    stackCtor(&spu->funcRetAddr, 10);
     spu->pc = 0;
 
     return SPU_PROCESS_OK;
@@ -47,7 +51,7 @@ bool runProcessor(processor* spu){
 
     bool result = false;
     while(spu->pc < (spu->sizeByteCode / sizeof(int))){
-        executeCommand(spu);
+        if(executeCommand(spu) == false) return false;
         (spu->pc)++;
     }
 
@@ -57,9 +61,10 @@ bool runProcessor(processor* spu){
 bool executeCommand(processor* spu){
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
         if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
-            commands[curCommandInd].ptr(spu);
-
             processorDump(spu);
+
+            if(commands[curCommandInd].ptr(spu) == false) return false;
+            
             break;
         } 
     }
@@ -70,6 +75,7 @@ processorStatus processorDtor(processor* spu){
     assert(spu);
 
     stackDtor(&spu->stk);
+    stackDtor(&spu->funcRetAddr);
 
     poisonMemory(spu->byteCode, spu->sizeByteCode);
     free(spu->byteCode);
@@ -180,6 +186,12 @@ bool out(processor* spu){
     return true;
 }
 
+bool hlt(processor* spu){
+    assert(spu);
+
+    return false;
+}
+
 bool jmp(processor* spu){
     assert(spu);
 
@@ -217,13 +229,33 @@ bool jmpCond(processor* spu){
     return true;
 }
 
+bool callFunc(processor* spu){
+    assert(spu);
+
+    stackPush(&(spu->funcRetAddr), spu->pc + 1);
+    spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    
+    return true;
+}
+
+bool returnFunc(processor* spu){
+    assert(spu);
+
+    stack_t retAddr = 0;
+    stackPop(&(spu->funcRetAddr), &retAddr);
+    spu->pc = (size_t) retAddr;
+
+    return true;
+}
+
 bool push(processor* spu){
     assert(spu);
 
     stack_t pushParameter = spu->byteCode[spu->pc + 1];
     stackPush(&(spu->stk), pushParameter); 
-
     spu->pc++;
+
+    processorDump(spu);
 
     return true;
 }

@@ -28,7 +28,9 @@ spu_command spu_commands[] = {
     {"JA",      0, JA},
     {"JAE",     0, JAE},
     {"JE",      0, JE},
-    {"JNE",     0, JNE}
+    {"JNE",     0, JNE},
+    {"CALL",    0, CALL},
+    {"RET",     0, RET}
 };
 
 static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize, int* labels);
@@ -61,7 +63,7 @@ bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBuff
         ///Обработка строки если она метка
         int curLabel = 0;
         if(sscanf(spuCommandsNames->strings[curString].stringPtr, ":%d", &curLabel)){
-            labels[curLabel] = (int) curString + 1;
+            labels[curLabel] = (int) *curByteBufferSize - 1;
             continue;
         }
 
@@ -89,18 +91,19 @@ bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBuff
     return true;
 }
 
-
-
 static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize, int* labels){
     assert(stringPtr);
     assert(byteCodeBuffer);
     assert(curByteBufferSize);
+
     if((commandCode == PUSHREG) || 
-       (commandCode == POPREG)){
+       (commandCode == POPREG)  ||
+       (commandCode == RET)){
         char reg[REGISTER_NAME_MAX_SIZE];
         sscanf(stringPtr, "%*s %s", reg);
+        
+        byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE;
 
-        byteCodeBuffer[*curByteBufferSize] = reg[0] - A_ASCII_CODE; /////
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", byteCodeBuffer[*curByteBufferSize]);)
         (*curByteBufferSize)++;
     }
@@ -112,12 +115,13 @@ static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeB
             (commandCode == JA)  ||
             (commandCode == JAE) ||
             (commandCode == JE)  ||
-            (commandCode == JNE)){
+            (commandCode == JNE) ||
+            (commandCode == CALL)){
         
-        int jumpPar = 0;
-        if(sscanf(stringPtr, "%*s :%d", &jumpPar)){
-            printf("JumpPar: %d\n", jumpPar);
-            byteCodeBuffer[*curByteBufferSize] = labels[jumpPar];
+        int labelPar = 0;
+        if(sscanf(stringPtr, "%*s :%d", &labelPar)){
+            printf("JumpPar: %d\n", labelPar);
+            byteCodeBuffer[*curByteBufferSize] = labels[labelPar];
             (*curByteBufferSize)++;
         }
         else{

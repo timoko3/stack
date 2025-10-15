@@ -34,6 +34,8 @@ enum spuCommandsCodes{
     JAE,
     JE,
     JNE,
+    CALL,
+    RET,
     PUSHREG = 33,
     POPREG  = 34
 };

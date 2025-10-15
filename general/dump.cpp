@@ -10,8 +10,14 @@ void processorDump(processor* spu){
 
     printf("\nSPU dump:");
 
+    printf("\n\tpc: %lu", spu->pc);
+
     printf("\n\tstack: ");
     simplePrintStack(&spu->stk);
+    printf("\n");
+
+    printf("\n\tretAddrStack: ");
+    simplePrintStack(&spu->funcRetAddr);
     printf("\n");
 
     printf("\tCode:");
