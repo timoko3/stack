@@ -47,9 +47,15 @@ struct spu_command{
     spuCommandsCodes code;
 };
 
+struct nameTranslator{
+    const char* name;
+    unsigned long hash;
+    int code;
+};
+
 void setSpuCommandsHash();
 int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize);
-bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize, int* byteCodeBuffer, int* labels);
+bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize, int* byteCodeBuffer);
 
 #if DEBUG_TRANSLATOR
 void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);
