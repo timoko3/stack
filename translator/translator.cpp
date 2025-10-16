@@ -3,84 +3,70 @@
 
 #include <assert.h>
 #include <stdlib.h>
-
-////// redactor this file after prev mentoring
-
-static void poisonLabels(nameTranslator* labels);
-void printNameTable();
+#include <stdio.h>
 
 #define ON_DEBUG(expression) if(DEBUG_TRANSLATOR){expression;};
 
-spu_command spu_commands[] = {
-    {"PUSH",    0, PUSH},
-    {"POP",     0, POP},
-    {"PUSHREG", 0, PUSHREG},
-    {"POPREG",  0, POPREG},
-    {"ADD",     0, ADD},
-    {"SUB",     0, SUB},
-    {"MUL",     0, MUL},
-    {"DIV",     0, DIV},
-    {"SQRT",    0, SQRT},
-    {"OUT",     0, OUT},
-    {"HLT",     0, HLT},
-    {"JMP",     0, JMP},
-    {"JB",      0, JB},
-    {"JBE",     0, JBE},
-    {"JA",      0, JA},
-    {"JAE",     0, JAE},
-    {"JE",      0, JE},
-    {"JNE",     0, JNE},
-    {"CALL",    0, CALL},
-    {"RET",     0, RET}
-};
+////// redactor this file after prev mentoring
 
-nameTranslator nameTable[N_LABELS] = {};
+static void poisonLabels(label_t* labels);
+static void printNameTable();
 
 static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static int  encodeCommand(char* curCommand);
 static int getLabelPar(char* curLabel);
 
+translator_t translatorCtor(){
+    translator_t translator;
+
+    translator.cmds = commands;
+    setSpuCommandsHash();
+
+    translator.ptrLabels = nameLabels;
+
+}
+
 /// MENTOR Про перенос в strFunc хочу еще раз обсудить()
-int* createByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize){
-    assert(spuCommandsNames);
+int* createByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize){
+    assert(spuTextCommands);
     assert(curByteBufferSize);
     
-    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuCommandsNames->nStrings * 2 + PREAMBLE_SIZE);
+    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuTextCommands->nStrings * 2 + PREAMBLE_SIZE);
     assert(byteCodeBuffer);
     
-    poisonLabels(nameTable);
+    poisonLabels(nameLabels);
 
-    fillByteCodeBuffer(spuCommandsNames, curByteBufferSize, byteCodeBuffer);
+    fillByteCodeBuffer(spuTextCommands, curByteBufferSize, byteCodeBuffer);
     *curByteBufferSize = 0;
     printf("*************\n");
-    fillByteCodeBuffer(spuCommandsNames, curByteBufferSize, byteCodeBuffer);
+    fillByteCodeBuffer(spuTextCommands, curByteBufferSize, byteCodeBuffer);
     
     ON_DEBUG(printf("curByteBufferSize: %lu\n", *curByteBufferSize))
 
     return byteCodeBuffer;
 }   
 
-bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBufferSize, int* byteCodeBuffer){
+bool fillByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer){
     size_t curLabelInd = 0;
-    for(size_t curString = 0; curString < spuCommandsNames->nStrings; curString++){
+    for(size_t curString = 0; curString < spuTextCommands->nStrings; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
 
         ///Обработка строки если она метка
         char curLabelName[20];
-        if(sscanf(spuCommandsNames->strings[curString].stringPtr, ":%s", curLabelName)){
+        if(sscanf(spuTextCommands->strings[curString].stringPtr, ":%s", curLabelName)){
             printf("Замена\n");
             printf("curByteBufferSize: %d\n", (int)*curByteBufferSize);
             printNameTable();
-            nameTable[curLabelInd].code = (int) *curByteBufferSize - 1;
-            nameTable[curLabelInd].name = curLabelName;
-            nameTable[curLabelInd].hash = hash(curLabelName, myStrLen(curLabelName, '\0'));
+            nameLabels[curLabelInd].code = (int) *curByteBufferSize - 1;
+            nameLabels[curLabelInd].name = curLabelName;
+            nameLabels[curLabelInd].hash = hash(curLabelName, myStrLen(curLabelName, '\0'));
             curLabelInd++;
             printf("\n");
             printNameTable();
             continue;
         }
 
-        sscanf(spuCommandsNames->strings[curString].stringPtr, "%s", curCommand);
+        sscanf(spuTextCommands->strings[curString].stringPtr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         
         int commandCode = encodeCommand(curCommand); 
@@ -92,7 +78,7 @@ bool fillByteCodeBuffer(DataFromInputFIle* spuCommandsNames, size_t* curByteBuff
         (*curByteBufferSize)++;
 
         addCommandParameter(commandCode, 
-                            spuCommandsNames->strings[curString].stringPtr, 
+                            spuTextCommands->strings[curString].stringPtr, 
                             byteCodeBuffer, 
                             curByteBufferSize);
 
@@ -183,12 +169,12 @@ static int encodeCommand(char* curCommand){
     assert(curCommand);
 
     unsigned long curCommandHash = hash(curCommand, myStrLen(curCommand, '\0'));
-    for(size_t curCommandInd = 0; curCommandInd < sizeof(spu_commands) / sizeof(spu_command); curCommandInd++){
-        ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", curCommandHash == spu_commands[curCommandInd].hash))
+    for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command_t); curCommandInd++){
+        ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", curCommandHash == commands[curCommandInd].hash))
         
-        if(curCommandHash == spu_commands[curCommandInd].hash){
-            ON_DEBUG(printf("Code to return: %d\n", spu_commands[curCommandInd].code))
-            return spu_commands[curCommandInd].code;
+        if(curCommandHash == commands[curCommandInd].hash){
+            ON_DEBUG(printf("Code to return: %d\n", commands[curCommandInd].code))
+            return commands[curCommandInd].code;
         }
     }
     
@@ -200,8 +186,8 @@ static int getLabelPar(char* curLabel){
 
     unsigned long curLabelHash = hash(curLabel, myStrLen(curLabel, '\0'));
     for(size_t curLabelInd = 0; curLabelInd < N_LABELS; curLabelInd++){
-        if(curLabelHash == nameTable[curLabelInd].hash){
-            return nameTable[curLabelInd].code;
+        if(curLabelHash == nameLabels[curLabelInd].hash){
+            return nameLabels[curLabelInd].code;
         }
     }
 
@@ -209,12 +195,12 @@ static int getLabelPar(char* curLabel){
 }
 
 void setSpuCommandsHash(){
-    for(size_t curCommand = 0; curCommand < sizeof(spu_commands) / sizeof(spu_command); curCommand++){
-        spu_commands[curCommand].hash = hash(spu_commands[curCommand].name, myStrLen(spu_commands[curCommand].name, '\0'));
+    for(size_t curCommand = 0; curCommand < sizeof(commands) / sizeof(command_t); curCommand++){
+        commands[curCommand].hash = hash(commands[curCommand].name, myStrLen(commands[curCommand].name, '\0'));
     }
 }
 
-static void poisonLabels(nameTranslator* labels){
+static void poisonLabels(label_t* labels){
     assert(labels);
 
     for(size_t curLabel = 0; curLabel < N_LABELS; curLabel++){
@@ -234,8 +220,8 @@ void printByteCodeBuffer(int* buffer, size_t curByteBufferSize){
 
 #endif /* DEBUG */
 
-void printNameTable(){
+static void printNameTable(){
     for(size_t curNameInd = 0; curNameInd < N_LABELS; curNameInd++){
-        printf("%lu метка — код: %d, hash: %lu\n", curNameInd, nameTable[curNameInd].code, nameTable[curNameInd].hash);
+        printf("%lu метка — код: %d, hash: %lu\n", curNameInd, nameLabels[curNameInd].code, nameLabels[curNameInd].hash);
     }
 }

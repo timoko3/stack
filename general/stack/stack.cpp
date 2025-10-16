@@ -1,15 +1,17 @@
 #include "stack.h"
 #include "general/poison.h"
-#include <stdint.h>
 #include "general/hash.h"
+
+#include <stdint.h>
 
 #define ON_DEBUG_LEVEL_4(expression) if(DEBUG_LEVEL > 3){expression};
 
-struct errorDescription errors[]{ 
+// in .h
+struct stackErrorDescription errors[]{ 
     {PROCESS_OK,                    "Все хорошо\n"},
     {CAPACITY_EXCEEDS_LIMIT,        "Значение capacity превышает максимально возможное\n"}, 
     {NULL_POINTER,                  "Указатели не должны быть нулевыми\n"},
-    {CAPACITY_IS_ZERO,              "capacity равно 0\n"}, 
+    {CAPACITY_IS_ZERO,              "Capacity равно 0\n"}, 
     {BAD_MEMORY_ALLOCATION,         "Некорректное выделение памяти\n"},
     {SIZE_EXCEEDS_CAPACITY,         "Размер стека превышает объем выделяемой памяти\n"},
     {CANARY_TORTURE,                "Канарейка была замучена до смерти\n"},
@@ -23,22 +25,22 @@ static void InitializeStackBuffer(stack* stk, size_t startStackInd);
 #if DEBUG_LEVEL > 0
 
 static void stackDump(stack* stk, const char* function, const char* file, const int line);
-static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line);
-static void assignErrorStruct(stack* stk, stackErr type);
+static stackError verifyStack(stack* stk, const char* function, const char* file, const int line);
+static void assignErrorStruct(stack* stk, stackError type);
 
 #endif /* DEBUG */
 
 #if DEBUG_LEVEL > 1
 
 static void setCanaryProtection(stack* stk);
-static stackErr canaryCheck(stack* stk);
+static stackError canaryCheck(stack* stk);
 
 #endif /* DEBUG */
 
 #if DEBUG_LEVEL > 2
 
 static bool genStackHash(stack* stk);
-static stackErr checkHash(stack* stk);
+static stackError checkHash(stack* stk);
 
 #endif /* DEBUG */
 
@@ -48,7 +50,7 @@ void print_mem_hex(const void *ptr, size_t size);
 
 #endif /* DEBUG */
 
-stackErr stackCtor(stack* stk, size_t capacity){
+stackError stackCtor(stack* stk, size_t capacity){
     assert(stk);
     assert(capacity > 0);
     assert(capacity < STACK_MAX_CAPACITY);
@@ -64,7 +66,7 @@ stackErr stackCtor(stack* stk, size_t capacity){
     #endif
 
     stk->size = 0;
-    stk->data = (stack_t*) calloc(stk->capacity, sizeof(stack_t));
+    stk->data = (stackData_t*) calloc(stk->capacity, sizeof(stackData_t));
     assert(stk->data);
 
     InitializeStackBuffer(stk, 0);
@@ -80,7 +82,7 @@ stackErr stackCtor(stack* stk, size_t capacity){
     return PROCESS_OK;
 }
 
-stackErr stackPush(stack* stk, stack_t value){
+stackError stackPush(stack* stk, stackData_t value){
 
     #if DEBUG_LEVEL > 0
     verify
@@ -96,7 +98,7 @@ stackErr stackPush(stack* stk, stack_t value){
         #endif /* DEBUG */
 
         stk->capacity = (stk->capacity) * 2;
-        stack_t* temp = (stack_t*) realloc(stk->data, (stk->capacity) * sizeof(stack_t));
+        stackData_t* temp = (stackData_t*) realloc(stk->data, (stk->capacity) * sizeof(stackData_t));
         assert(temp);
 
         stk->data = temp;
@@ -134,7 +136,7 @@ stackErr stackPush(stack* stk, stack_t value){
     return PROCESS_OK;
 }
 
-stackErr stackPop(stack* stk, stack_t* stackElem){
+stackError stackPop(stack* stk, stackData_t* stackElem){
     assert(stackElem);
 
     #if DEBUG_LEVEL > 0
@@ -169,7 +171,7 @@ stackErr stackPop(stack* stk, stack_t* stackElem){
     return PROCESS_OK;
 }
 
-stackErr stackDtor(stack* stk){
+stackError stackDtor(stack* stk){
     assert(stk);
     
     for(size_t curElemInd = 0; curElemInd < stk->size; curElemInd++){
@@ -208,7 +210,7 @@ static void InitializeStackBuffer(stack* stk, size_t startStackInd){
 
 #if DEBUG_LEVEL > 0
 
-static stackErr verifyStack(stack* stk, const char* function, const char* file, const int line){
+static stackError verifyStack(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
         printf("stk — нулевой указатель\n");  
     } 
@@ -227,7 +229,7 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
         else if(stk->size > stk->capacity){
             assignErrorStruct(stk, SIZE_EXCEEDS_CAPACITY);
         }
-        else if(malloc_usable_size(stk->data) != (sizeof(stack_t) * stk->capacity)){
+        else if(malloc_usable_size(stk->data) != (sizeof(stackData_t) * stk->capacity)){
             assignErrorStruct(stk, BAD_MEMORY_ALLOCATION);
         }
 
@@ -249,10 +251,10 @@ static stackErr verifyStack(stack* stk, const char* function, const char* file, 
     return stk->error.type;
 }
 
-static void assignErrorStruct(stack* stk, stackErr type){
+static void assignErrorStruct(stack* stk, stackError type){
     assert(stk);
 
-    for(size_t curErrInd = 0; curErrInd < sizeof(errors) / sizeof(errorDescription); curErrInd++){
+    for(size_t curErrInd = 0; curErrInd < sizeof(errors) / sizeof(stackErrorDescription); curErrInd++){
         if(errors[curErrInd].type == type){
             stk->error = errors[curErrInd];
         }
@@ -281,12 +283,12 @@ void static stackDump(stack* stk, const char* function, const char* file, const 
     printf(SET_STYLE_BOLD_FONT_BLUE "\tsize = %lu\n" RESET, stk->size);
     printf(SET_STYLE_BOLD_FONT_BLUE "\tcapacity = %lu\n\n" RESET, stk->capacity);
 
-    if(sizeof(stack_t) * stk->capacity == malloc_usable_size(stk->data)){
-        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stack_t) * stk->capacity);
+    if(sizeof(stackData_t) * stk->capacity == malloc_usable_size(stk->data)){
+        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stackData_t) * stk->capacity);
         printf(SET_STYLE_BOLD_FONT_GREEN "\tРазмер выделенного блока data: %lu байт(-ов)\n" RESET, malloc_usable_size(stk->data));
     }
     else{
-        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stack_t) * stk->capacity);
+        printf(SET_STYLE_BOLD_FONT_GREEN "\tНеобходимый размер блока data: %lu байт(-ов)\n" RESET, sizeof(stackData_t) * stk->capacity);
         printf( SET_STYLE_BOLD_FONT_RED"\tРазмер выделенного блока data:"RESET 
                 SET_STYLE_BLINKING_FONT_RED" %lu байт(-ов)\n" RESET, malloc_usable_size(stk->data));
     }
@@ -327,7 +329,7 @@ static void setCanaryProtection(stack* stk){
     #endif
 }
 
-static stackErr canaryCheck(stack* stk){
+static stackError canaryCheck(stack* stk){
     assert(stk);
 
     for(size_t i = 0; i < CANARY_PROTECTION_SIZE; i++){
@@ -361,7 +363,7 @@ static bool genStackHash(stack* stk){
     return true;
 }
 
-static stackErr checkHash(stack* stk){
+static stackError checkHash(stack* stk){
     assert(stk);
 
     unsigned long curDataHash   = stk->hashData;

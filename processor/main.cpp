@@ -1,5 +1,4 @@
 #include "processor.h"
-#include "general/dump.h"
 
 int main(void){
     const char* byteCodeInputFile = "factorial.asm";

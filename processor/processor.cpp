@@ -1,9 +1,35 @@
 #include "processor.h"
 #include "general/poison.h"
 #include "general/file.h"
-#include "general/dump.h"
 
 #include <math.h>
+
+static void processorDump(processor* spu);
+static void simplePrintStack(stack* stk);
+static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
+static void printRegs(int* regs);
+
+static bool add(processor* spu);
+static bool sub(processor* spu);
+static bool mul(processor* spu);
+static bool div(processor* spu);
+static bool sqrt(processor* spu);
+static bool out(processor* spu);
+static bool hlt(processor* spu);
+static bool jmp(processor* spu);
+static bool jmpCond(processor* spu);
+static bool push(processor* spu);
+static bool pushreg(processor* spu);
+static bool popreg(processor* spu);
+static bool callFunc(processor* spu);
+static bool returnFunc(processor* spu);
+
+typedef bool (*commandPtr)(processor*);
+
+struct command{
+    cmdOpcodes code; 
+    commandPtr ptr;
+};
 
 command commands[]{ 
     {ADD,     add},
@@ -14,7 +40,7 @@ command commands[]{
     {HLT,     hlt},
     {PUSH,    push},
     {JMP,     jmpCond},
-    {JB,      jmpCond},
+    {JB,      jmpCond}, // jmpJB
     {JBE,     jmpCond},
     {JA,      jmpCond},
     {JAE,     jmpCond},
@@ -22,16 +48,24 @@ command commands[]{
     {JNE,     jmpCond},
     {PUSHREG, pushreg},
     {POPREG,  popreg},
-    {CALL, callFunc},
-    {RET, returnFunc}
+    {CALL,    callFunc},
+    {RET,     returnFunc}
 }; 
+
+// bool JBcmp(int arg1, int arg2) { return arg1 <  arg2; }
+// bool JBcmp(int arg1, int arg2) { return arg1 <= arg2; }
+// bool JBcmp(int arg1, int arg2) { return arg1 >  arg2; }
+// bool JBcmp(int arg1, int arg2) { return arg1 >= arg2; }
+// bool JBcmp(int arg1, int arg2) { return arg1 == arg2; }
+// bool JBcmp(int arg1, int arg2) { return arg1 != arg2; }
+// jmpJB(...){ jmpCond (JBcond); }
 
 processorStatus processorCtor(processor* spu, const char* fileName){
     assert(spu);
 
     spu->sizeByteCode = getFileSize(fileName);
     spu->byteCode = (int*) calloc(1, spu->sizeByteCode);
-    assert(spu1.byteCode);
+    assert(spu->byteCode);
 
     fileDescription byteCodeFileDes = {
         fileName,
@@ -52,22 +86,25 @@ bool runProcessor(processor* spu){
     bool result = false;
     while(spu->pc < (spu->sizeByteCode / sizeof(int))){
         if(executeCommand(spu) == false) return false;
-        (spu->pc)++;
     }
 
     return result;
 }
 
 bool executeCommand(processor* spu){
+    assert(spu);
+    
+    processorDump(spu);
+
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
         if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
-            processorDump(spu);
 
             if(commands[curCommandInd].ptr(spu) == false) return false;
             
             break;
         } 
-    }
+    } 
+    (spu->pc)++;
     return true;
 }
 
@@ -89,11 +126,70 @@ processorStatus processorDtor(processor* spu){
     return SPU_PROCESS_OK;
 }
 
-bool add(processor* spu){
+static void processorDump(processor* spu){
     assert(spu);
 
-    stack_t term1 = 0;
-    stack_t term2 = 0;
+    printf("\nSPU dump:");
+
+    printf("\n\tpc: %lu", spu->pc);
+
+    printf("\n\tstack: ");
+    simplePrintStack(&spu->stk);
+    printf("\n");
+
+    printf("\n\tretAddrStack: ");
+    simplePrintStack(&spu->funcRetAddr);
+    printf("\n");
+
+    printf("\tCode:");
+    printByteCode(spu->byteCode, spu->sizeByteCode, spu->pc);
+    printf("\n");
+
+    printf("\tRegs:");
+    printRegs(spu->regs);
+
+    getchar();
+    printf("\n\n");
+}
+
+static void simplePrintStack(stack* stk){
+    assert(stk);
+    
+    for(size_t curStackElem = 0; curStackElem < stk->capacity; curStackElem++){
+        if((curStackElem % 4) == 0) printf("\n\t\t");
+        printf("%d ", stk->data[curStackElem]);
+    }
+}
+
+static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc){
+    assert(byteCode);
+
+    for(size_t curByte = 0; curByte < byteCodeSize; curByte++){
+        if((curByte % 4) == 0) printf(" ");
+        if(((curByte % 16) == 0)) printf("\n\t\t");
+        if((curByte == pc * 4)){
+            printf(SET_STYLE_BOLD_FONT_PURPLE "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+        }
+        else{
+            printf(SET_STYLE_BOLD_FONT_YELLOW "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+        }
+    }
+}
+
+static void printRegs(int* regs){
+    assert(regs);
+    
+    printf("\n\t\t");
+    for(size_t curReg = 0; curReg < N_REGISTERS; curReg++){
+        printf("%d ", regs[curReg]);
+    }
+}
+
+static bool add(processor* spu){
+    assert(spu);
+
+    stackData_t term1 = 0;
+    stackData_t term2 = 0;
 
     stackPop(&spu->stk, &term1);
     stackPop(&spu->stk, &term2);
@@ -103,11 +199,11 @@ bool add(processor* spu){
     return true;
 }
 
-bool sub(processor* spu){   
+static bool sub(processor* spu){   
     assert(spu);
 
-    stack_t minuend = 0;
-    stack_t subtrahend = 0;
+    stackData_t minuend = 0;
+    stackData_t subtrahend = 0;
 
     stackPop(&spu->stk, &minuend);
     stackPop(&spu->stk, &subtrahend);
@@ -117,11 +213,11 @@ bool sub(processor* spu){
     return true;
 }
 
-bool mul(processor* spu){
+static bool mul(processor* spu){
     assert(spu);
 
-    stack_t factor1 = 0;
-    stack_t factor2 = 0;
+    stackData_t factor1 = 0;
+    stackData_t factor2 = 0;
 
     stackPop(&spu->stk, &factor1);
     stackPop(&spu->stk, &factor2);
@@ -131,11 +227,11 @@ bool mul(processor* spu){
     return true;
 }
 
-bool div(processor* spu){
+static bool div(processor* spu){
     assert(spu);
 
-    stack_t dividend = 0;
-    stack_t divider = 0;
+    stackData_t dividend = 0;
+    stackData_t divider = 0;
 
     stackPop(&spu->stk, &dividend);
     stackPop(&spu->stk, &divider);
@@ -151,10 +247,10 @@ bool div(processor* spu){
     return true;
 }
 
-bool sqrt(processor* spu){
+static bool sqrt(processor* spu){
     assert(spu);
 
-    stack_t radicalExpression = 0;
+    stackData_t radicalExpression = 0;
 
     stackPop(&spu->stk, &radicalExpression);
 
@@ -163,17 +259,17 @@ bool sqrt(processor* spu){
         stackPush(&spu->stk, radicalExpression);
         return false;
     }
-    stackPush(&spu->stk, (stack_t) sqrt(radicalExpression));
+    stackPush(&spu->stk, (stackData_t) sqrt(radicalExpression));
 
     return true;
 }
 
-bool out(processor* spu){
+static bool out(processor* spu){
     assert(spu);
 
     printf("Все элементы стека:\n");
 
-    stack_t curElem = 0;
+    stackData_t curElem = 0;
     while(stackPop(&spu->stk, &curElem) != EMPTY_STACK){
         if(spu->stk.error.type != PROCESS_OK){
             break;
@@ -186,13 +282,13 @@ bool out(processor* spu){
     return true;
 }
 
-bool hlt(processor* spu){
+static bool hlt(processor* spu){
     assert(spu);
 
     return false;
 }
 
-bool jmp(processor* spu){
+static bool jmp(processor* spu){
     assert(spu);
 
     spu->pc = (size_t) spu->byteCode[spu->pc + 1];
@@ -200,11 +296,11 @@ bool jmp(processor* spu){
     return true;
 }
 
-bool jmpCond(processor* spu){
+static bool jmpCond(processor* spu){
     assert(spu);
 
-    stack_t superiorStackElem = 0;
-    stack_t preSuperiorStackElem = 0;
+    stackData_t superiorStackElem = 0;
+    stackData_t preSuperiorStackElem = 0;
 
     stackPop(&spu->stk, &superiorStackElem);
     stackPop(&spu->stk, &preSuperiorStackElem);    
@@ -213,12 +309,13 @@ bool jmpCond(processor* spu){
 
     bool doJump = false;
     switch(jumpSign){
-        case JB : if(superiorStackElem <  preSuperiorStackElem)doJump = true;  break;  
-        case JBE: if(superiorStackElem <= preSuperiorStackElem)doJump = true;  break;  
-        case JA : if(superiorStackElem >  preSuperiorStackElem)doJump = true;  break;
-        case JAE: if(superiorStackElem >= preSuperiorStackElem)doJump = true;  break; 
-        case JE : if(superiorStackElem == preSuperiorStackElem)doJump = true;  break; 
-        case JNE: if(superiorStackElem != preSuperiorStackElem)doJump = true;  break; 
+        // case JB : doJump = JBcond(arg1, arg2);  break;
+        case JB : if(superiorStackElem <  preSuperiorStackElem) doJump = true;  break;  
+        case JBE: if(superiorStackElem <= preSuperiorStackElem) doJump = true;  break;  
+        case JA : if(superiorStackElem >  preSuperiorStackElem) doJump = true;  break;
+        case JAE: if(superiorStackElem >= preSuperiorStackElem) doJump = true;  break; 
+        case JE : if(superiorStackElem == preSuperiorStackElem) doJump = true;  break; 
+        case JNE: if(superiorStackElem != preSuperiorStackElem) doJump = true;  break; 
         default : doJump = false;
     }
     
@@ -232,31 +329,31 @@ bool jmpCond(processor* spu){
     return true;
 }
 
-bool callFunc(processor* spu){
+static bool callFunc(processor* spu){
     assert(spu);
 
-    stackPush(&(spu->funcRetAddr), spu->pc + 1);
+    stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 1);
     spu->pc = (size_t) spu->byteCode[spu->pc + 1];
     
     return true;
 }
 
-bool returnFunc(processor* spu){
+static bool returnFunc(processor* spu){
     assert(spu);
 
     popreg(spu);
 
-    stack_t retAddr = 0;
+    stackData_t retAddr = 0;
     stackPop(&(spu->funcRetAddr), &retAddr);
     spu->pc = (size_t) retAddr;
 
     return true;
 }
 
-bool push(processor* spu){
+static bool push(processor* spu){
     assert(spu);
 
-    stack_t pushParameter = spu->byteCode[spu->pc + 1];
+    stackData_t pushParameter = spu->byteCode[spu->pc + 1];
     stackPush(&(spu->stk), pushParameter); 
     spu->pc++;
 
@@ -265,7 +362,7 @@ bool push(processor* spu){
     return true;
 }
 
-bool pushreg(processor* spu){
+static bool pushreg(processor* spu){
     assert(spu);
 
     int curReg = spu->regs[spu->byteCode[spu->pc + 1]];
@@ -277,7 +374,7 @@ bool pushreg(processor* spu){
     return true; 
 }
 
-bool popreg(processor* spu){
+static bool popreg(processor* spu){
     assert(spu);
 
     stackPop(&spu->stk, &(spu->regs[spu->byteCode[spu->pc + 1]]));

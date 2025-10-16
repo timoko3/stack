@@ -7,6 +7,7 @@ size_t myStrLen(const char* start, char endStr){
 
     size_t curSymInd = 0;
     while(start[curSymInd] != endStr) curSymInd++;
+    
     return curSymInd;
 }
 

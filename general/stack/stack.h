@@ -17,14 +17,14 @@
 #define NDEBUG
 #endif
 
-typedef int stack_t;
+typedef int stackData_t;
 
 const int POISON_NUMBER = INT_MAX / 10;
 const size_t STACK_MAX_CAPACITY = 1e9;
 
 #if DEBUG_LEVEL > 1
 const size_t  CANARY_PROTECTION_SIZE   = 1;  
-const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
+const stackData_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 #endif /* DEBUG */
 
 #if DEBUG_LEVEL > 0
@@ -34,7 +34,7 @@ const stack_t CANARY_PROTECTION_NUMBER = INT_MAX / 20;
 
 #endif /* DEBUG */
 
-enum stackErr{
+enum stackError{
     CAPACITY_EXCEEDS_LIMIT,
     NULL_POINTER,
     CAPACITY_IS_ZERO,
@@ -47,17 +47,16 @@ enum stackErr{
     PROCESS_OK
 };
 
-struct errorDescription{
-    stackErr type;
+struct stackErrorDescription{
+    stackError type;
     const char* text;
 };
 
-// #pragma pack(push, 1)
 struct stack{
-    stack_t* data;
+    stackData_t* data;
     size_t size;
     size_t capacity;
-    errorDescription error;
+    stackErrorDescription error;
     #if DEBUG_LEVEL > 1
     bool canaryStatus = false;
     #endif
@@ -66,11 +65,11 @@ struct stack{
     unsigned long hashData;
     #endif
 };
-// #pragma pack(pop)
 
-stackErr stackCtor(stack* stk, size_t capacity);
-stackErr stackPush(stack* stk, stack_t value);
-stackErr stackPop(stack* stk, stack_t* stackElem);
-stackErr stackDtor(stack* stk);
+stackError stackCtor(stack* stk, size_t capacity);
+/// stackError stackGet(const stack* stk, size_t index, stackData_t* stackElem);
+stackError stackPush(stack* stk, stackData_t value);
+stackError stackPop(stack* stk, stackData_t* stackElem);
+stackError stackDtor(stack* stk);
 
 #endif /* STACK_H */

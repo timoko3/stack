@@ -1,5 +1,4 @@
 #include "file.h"
-#include "translator/translator.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -14,8 +13,11 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 static void printBuffer(char* buffer);
 #endif /* DEBUG */
 
+
+
 int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName){
     assert(DataFromInputFIle);
+    assert(fileName);
 
     if((DataFromInputFIle->fileSize = getFileSize(fileName)) == EXIT_FAILURE) return EXIT_FAILURE;
 
@@ -118,6 +120,7 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
 
 void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName){
     assert(byteCodeBuffer);
+    assert(fileName);
 
     fileDescription byteCode = {
         fileName,

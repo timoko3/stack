@@ -2,11 +2,11 @@ PUSH 6
 PUSH 1
 POPREG AX ;In AX the result is stored
 POPREG BX ;In BX curN
-CALL :1
+CALL :factorial
 PUSHREG RX
 OUT
 HLT
-:1   ;factorial function
+:factorial  ;factorial function
 PUSHREG BX ; dostaem pervoe znachenie N
 PUSH 1     ; decrimentation N
 PUSHREG BX ; decrimentation N
@@ -14,10 +14,10 @@ SUB        ; decrimentation N
 POPREG BX  ; decrimentation N
 PUSH 1     ; if begin
 PUSHREG BX ;
-JBE :2     ; if end
-CALL :1
+JBE :end     ; if end
+CALL :factorial
 PUSHREG RX
 MUL
 RET
-:2
+:end
 RET

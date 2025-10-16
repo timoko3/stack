@@ -6,31 +6,30 @@
 #include "general/strFunc.h"
 #include "translator.h"
 
-const char* const FLAG_INPUT_FILE  = "-i";
-const char* const FLAG_OUTPUT_FILE = "-o";
-
 int main(){
-    const char* textCommandsFileName   = "factorial.txt"; 
-    const char* outputByteCodeFileName = "factorial.asm";
-
-    setSpuCommandsHash();
-
-    DataFromInputFIle spuCommandsNames;
-    parseStringsFile(&spuCommandsNames, (const char*) textCommandsFileName); 
-    
-    size_t curByteBufferSize = 0;
-    int* byteCodeBuffer = createByteCodeBuffer(&spuCommandsNames, &curByteBufferSize);
-    
-    #if DEBUG_TRANSLATOR > 0
-    printByteCodeBuffer(byteCodeBuffer, curByteBufferSize);
-    #endif /* DEBUG_TRANSLATOR */
-
-    // write 
-    createByteCodeFile(byteCodeBuffer, curByteBufferSize, (const char*) outputByteCodeFileName);
-
-    free(spuCommandsNames.buffer); // 
-    free(spuCommandsNames.strings); // 
-    free(byteCodeBuffer);
+    // const char* buf = "PUSH 6
+    //     PUSH 1
+    //     POPREG AX ;In AX the result is stored
+    //     POPREG BX ;In BX curN
+    //     CALL :factorial
+    //     PUSHREG RX
+    //     OUT
+    //     HLT
+    //     :factorial  ;factorial function
+    //     PUSHREG BX ; dostaem pervoe znachenie N
+    //     PUSH 1     ; decrimentation N
+    //     PUSHREG BX ; decrimentation N
+    //     SUB        ; decrimentation N
+    //     POPREG BX  ; decrimentation N
+    //     PUSH 1     ; if begin
+    //     PUSHREG BX ;
+    //     JBE :end     ; if end
+    //     CALL :factorial
+    //     PUSHREG RX
+    //     MUL
+    //     RET
+    //     :end
+    //     RET";
 
 }
 
