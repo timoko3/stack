@@ -36,4 +36,4 @@ const size_t PREAMBLE_SIZE = 2;
 const int SIGNATURE        = 999;
 const int VERSION          = 1;
 
-#endif /* CMD_OPCODES_H*/
+#endif /* CMD_OPCODES_H */

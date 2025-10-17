@@ -118,7 +118,7 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     return strings;
 }
 
-void createByteCodeFile(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName){
+void writeOpcode(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName){
     assert(byteCodeBuffer);
     assert(fileName);
 

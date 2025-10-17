@@ -17,7 +17,8 @@ enum processorStatus{
     SPU_PROCESS_OK
 };
 
-processorStatus processorCtor(processor* spu, const char* fileName);
+bool getOpcodeBuffer(processor* spu, const char* fileName);
+processorStatus processorCtor(processor* spu);
 processorStatus processorDtor(processor* spu);
 bool runProcessor(processor* spu);
 bool executeCommand(processor* spu);

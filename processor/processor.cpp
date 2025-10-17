@@ -31,7 +31,7 @@ struct command{
     commandPtr ptr;
 };
 
-command commands[]{ 
+command commandsHandler[]{ 
     {ADD,     add},
     {SUB,     sub},
     {MUL,     mul},
@@ -60,8 +60,9 @@ command commands[]{
 // bool JBcmp(int arg1, int arg2) { return arg1 != arg2; }
 // jmpJB(...){ jmpCond (JBcond); }
 
-processorStatus processorCtor(processor* spu, const char* fileName){
+bool getOpcodeBuffer(processor* spu, const char* fileName){
     assert(spu);
+    assert(fileName);
 
     spu->sizeByteCode = getFileSize(fileName);
     spu->byteCode = (int*) calloc(1, spu->sizeByteCode);
@@ -72,6 +73,12 @@ processorStatus processorCtor(processor* spu, const char* fileName){
         "rb"
     };
     getIntNumsToBuffer(byteCodeFileDes, spu->sizeByteCode, &spu->byteCode);
+
+    return true;
+}
+
+processorStatus processorCtor(processor* spu){
+    assert(spu);
 
     stackCtor(&spu->stk, 10);
     stackCtor(&spu->funcRetAddr, 10);
@@ -96,10 +103,10 @@ bool executeCommand(processor* spu){
     
     processorDump(spu);
 
-    for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command); curCommandInd++){
-        if(commands[curCommandInd].code == spu->byteCode[spu->pc]){
+    for(size_t curCommandInd = 0; curCommandInd < sizeof(commandsHandler) / sizeof(command); curCommandInd++){
+        if(commandsHandler[curCommandInd].code == spu->byteCode[spu->pc]){
 
-            if(commands[curCommandInd].ptr(spu) == false) return false;
+            if(commandsHandler[curCommandInd].ptr(spu) == false) return false;
             
             break;
         } 

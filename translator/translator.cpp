@@ -5,6 +5,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+command_t commands[] = {
+    {PUSH,    "PUSH",    0},
+    {POP,     "POP",     0},
+    {PUSHREG, "PUSHREG", 0},
+    {POPREG,  "POPREG",  0},
+    {ADD,     "ADD",     0},
+    {SUB,     "SUB",     0},
+    {MUL,     "MUL",     0},
+    {DIV,     "DIV",     0},
+    {SQRT,    "SQRT",    0},
+    {OUT,     "OUT",     0},
+    {HLT,     "HLT",     0},
+    {JMP,     "JMP",     0},
+    {JB,      "JB",      0},
+    {JBE,     "JBE",     0},
+    {JA,      "JA",      0},
+    {JAE,     "JAE",     0},
+    {JE,      "JE",      0},
+    {JNE,     "JNE",     0},
+    {CALL,    "CALL",    0},
+    {RET,     "RET",     0}
+};
+
+label_t nameLabels[N_LABELS] = {};
+
 #define ON_DEBUG(expression) if(DEBUG_TRANSLATOR){expression;};
 
 ////// redactor this file after prev mentoring
@@ -24,26 +49,37 @@ translator_t translatorCtor(){
 
     translator.ptrLabels = nameLabels;
 
+    translator.opcode = (buffer_t*) calloc(1, sizeof(buffer_t)); // или malloc + memset
+    assert(translator.opcode);
+
+    return translator;
 }
 
-/// MENTOR Про перенос в strFunc хочу еще раз обсудить()
-int* createByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize){
-    assert(spuTextCommands);
-    assert(curByteBufferSize);
-    
-    int* byteCodeBuffer = (int*) calloc(sizeof(int), spuTextCommands->nStrings * 2 + PREAMBLE_SIZE);
-    assert(byteCodeBuffer);
-    
-    poisonLabels(nameLabels);
+bool loadTextCommands(translator_t* translator, const char* fileName){
+    assert(translator);
+    assert(fileName);
 
-    fillByteCodeBuffer(spuTextCommands, curByteBufferSize, byteCodeBuffer);
-    *curByteBufferSize = 0;
+    if((parseStringsFile(&translator->spuCommandsText, (const char*) fileName)) == EXIT_FAILURE) return false;
+
+    return true;
+}
+
+bool assemble(translator_t* translator){
+    assert(translator);
+    
+    translator->opcode->ptr = (int*) calloc(sizeof(int), translator->spuCommandsText.nStrings * 2 + PREAMBLE_SIZE);
+    assert(translator->opcode);
+    
+    poisonLabels(translator->ptrLabels);
+
+    fillByteCodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
+    translator->opcode->size = 0;
     printf("*************\n");
-    fillByteCodeBuffer(spuTextCommands, curByteBufferSize, byteCodeBuffer);
+    fillByteCodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
     
-    ON_DEBUG(printf("curByteBufferSize: %lu\n", *curByteBufferSize))
+    ON_DEBUG(printf("curByteBufferSize: %lu\n", translator->opcode->size))
 
-    return byteCodeBuffer;
+    return true;
 }   
 
 bool fillByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer){

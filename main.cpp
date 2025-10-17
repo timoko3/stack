@@ -1,6 +1,6 @@
-#include "processor.h"
-#include "translator.h"
-#include "file.h"
+#include "processor/processor.h"
+#include "translator/translator.h"
+#include "general/file.h"
 
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
@@ -11,14 +11,22 @@ const char* outputByteCodeFileName = "factorial.asm";
 int main(void){
     translator_t translator = translatorCtor();
 
-    parseStringsFile(&translator.spuCommandsText, (const char*) textCommandsFileName); 
+    loadTextCommands(&translator, textCommandsFileName);
 
-    int* byteCodeBuffer = createByteCodeBuffer(&spuTextCommands, &curByteBufferSize);
+    assemble(&translator);
 
-    // write 
-    createByteCodeFile(byteCodeBuffer, curByteBufferSize, (const char*) outputByteCodeFileName);
+    writeOpcode(translator.opcode->ptr, translator.opcode->size, (const char*) outputByteCodeFileName);
 
-    free(spuTextCommands.buffer); // 
-    free(spuTextCommands.strings); // 
-    free(byteCodeBuffer);
+    processor spu1; 
+    getOpcodeBuffer(&spu1, outputByteCodeFileName); ///
+    processorCtor(&spu1);
+
+    runProcessor(&spu1);
+
+    processorDtor(&spu1);
+
+    free(translator.spuCommandsText.buffer); // 
+    free(translator.spuCommandsText.strings); // 
+    free(translator.opcode->ptr);
+    free(translator.opcode);
 }

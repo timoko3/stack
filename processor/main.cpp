@@ -1,14 +1,16 @@
 #include "processor.h"
 
+const char* byteCodeInputFile = "factorial.asm";
+
 int main(void){
-    const char* byteCodeInputFile = "factorial.asm";
 
-    processor spu1; 
-    processorCtor(&spu1, byteCodeInputFile);
 
-    runProcessor(&spu1);
+    // processor spu1; 
+    // processorCtor(&spu1, byteCodeInputFile);
 
-    processorDtor(&spu1);
+    // runProcessor(&spu1);
+
+    // processorDtor(&spu1);
 }
 
 

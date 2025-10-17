@@ -34,34 +34,10 @@ struct translator_t{
     buffer_t*    opcode;
 };
 
-command_t commands[] = {
-    {PUSH,    "PUSH",    0},
-    {POP,     "POP",     0},
-    {PUSHREG, "PUSHREG", 0},
-    {POPREG,  "POPREG",  0},
-    {ADD,     "ADD",     0},
-    {SUB,     "SUB",     0},
-    {MUL,     "MUL",     0},
-    {DIV,     "DIV",     0},
-    {SQRT,    "SQRT",    0},
-    {OUT,     "OUT",     0},
-    {HLT,     "HLT",     0},
-    {JMP,     "JMP",     0},
-    {JB,      "JB",      0},
-    {JBE,     "JBE",     0},
-    {JA,      "JA",      0},
-    {JAE,     "JAE",     0},
-    {JE,      "JE",      0},
-    {JNE,     "JNE",     0},
-    {CALL,    "CALL",    0},
-    {RET,     "RET",     0}
-};
-
-label_t nameLabels[N_LABELS] = {};
-
 void setSpuCommandsHash();
 translator_t translatorCtor();
-int* createByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize);
+bool loadTextCommands(translator_t* translator, const char* fileName);
+bool assemble(translator_t* translator);
 bool fillByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer);
 
 #if DEBUG_TRANSLATOR
