@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 struct string {
-    char* stringPtr;
+    char* ptr;
     size_t len;
 };
 
@@ -21,6 +21,6 @@ const int SIZE_OF_END_FILE     = 1;
 const char END_STR             = '\n';
 
 size_t countStrings(char* buf, size_t fileSize, char endStr);
-size_t myStrLen(const char* start, char endStr);
+size_t myStrLen(const char* start, char endStr ='\0');
 
 #endif /* STR_FUNC_H */

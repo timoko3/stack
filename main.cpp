@@ -2,18 +2,23 @@
 #include "translator/translator.h"
 #include "general/file.h"
 
+#include "processor/cmd.h"
+
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
 
-const char* textCommandsFileName   = "factorial.txt"; 
+const char* textCommandsFileName   = "test.txt"; 
 const char* outputByteCodeFileName = "factorial.asm";
 
-#define BUFFER_FROM_FILE
+// #define BUFFER_FROM_FILE
 
 int main(void){
     translator_t translator = translatorCtor();
 
-    loadTextCommands(&translator, textCommandsFileName);
+    DataFromInputFIle buf = {};
+    if((parseStringsFile(&buf, textCommandsFileName)) == EXIT_FAILURE) return false;
+    
+    loadTextCommands(&translator, {buf.strings, buf.nStrings});
 
     assemble(&translator);
     
@@ -37,7 +42,16 @@ int main(void){
     getOpcodeBuffer(&spu1, outputByteCodeFileName); ///  
     #endif /* BUFFER_FROM_FILE */  
 
+    stackPush(&spu1.stk, 5);
+    stackPush(&spu1.stk, 7);
+    stackPush(&spu1.stk, 3);
+
     runProcessor(&spu1);
+    
+    stackDump(&spu1.stk, __FUNCTION__, __FILE__, __LINE__);
+
+    free(buf.buffer); // 
+    free(buf.strings); // 
     
     processorDtor(&spu1);
 }

@@ -87,7 +87,7 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     string* strings = (string*) calloc(nStrings, sizeof(string));
     assert(strings);
 
-    strings[0].stringPtr = buffer;
+    strings[0].ptr = buffer;
 
     #ifdef DEBUG
     printBuffer(buffer);
@@ -103,15 +103,15 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
         #endif /* DEBUG */
         if(buffer[curSym] == END_STR){
             
-            strings[curStr].stringPtr = buffer + curSym + 1;
-            strings[curStr - 1].len = (size_t) strings[curStr].stringPtr - 
-                                      (size_t) strings[curStr - 1].stringPtr;
+            strings[curStr].ptr = buffer + curSym + 1;
+            strings[curStr - 1].len = (size_t) strings[curStr].ptr - 
+                                      (size_t) strings[curStr - 1].ptr;
             curStr++;
         }
         
     }
     
-    strings[curStr - 1].len = (size_t) ((buffer + curSym) - strings[curStr - 1].stringPtr);
+    strings[curStr - 1].len = (size_t) ((buffer + curSym) - strings[curStr - 1].ptr);
 
     return strings;
 }

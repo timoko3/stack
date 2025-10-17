@@ -24,7 +24,6 @@ static void InitializeStackBuffer(stack* stk, size_t startStackInd);
 
 #if DEBUG_LEVEL > 0
 
-static void stackDump(stack* stk, const char* function, const char* file, const int line);
 static stackError verifyStack(stack* stk, const char* function, const char* file, const int line);
 static void assignErrorStruct(stack* stk, stackError type);
 
@@ -261,7 +260,7 @@ static void assignErrorStruct(stack* stk, stackError type){
     }
 }
 
-void static stackDump(stack* stk, const char* function, const char* file, const int line){
+void stackDump(stack* stk, const char* function, const char* file, const int line){
     if(stk == NULL){
         printf("Передача нулевого указателя недопустима\n");                                                                                                          
         return;

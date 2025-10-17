@@ -14,12 +14,13 @@ struct processor{
 };
 
 enum processorStatus{
-    SPU_PROCESS_OK
+    SPU_PROCESS_OK,
+    SPU_PROCESS_ERROR
 };
 
-bool getOpcodeBuffer(processor* spu, const char* fileName);
 processorStatus processorCtor(processor* spu);
 processorStatus processorDtor(processor* spu);
+bool getOpcodeBuffer(processor* spu, const char* fileName);
 bool runProcessor(processor* spu);
 bool executeCommand(processor* spu);
 

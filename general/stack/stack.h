@@ -10,7 +10,7 @@
 #include "genConsoleColors/consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 2
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0
@@ -71,5 +71,6 @@ stackError stackCtor(stack* stk, size_t capacity);
 stackError stackPush(stack* stk, stackData_t value);
 stackError stackPop(stack* stk, stackData_t* stackElem);
 stackError stackDtor(stack* stk);
+void stackDump(stack* stk, const char* function, const char* file, const int line);
 
 #endif /* STACK_H */

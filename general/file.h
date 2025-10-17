@@ -14,10 +14,15 @@ const char* const FUNCTION_FAILURE_ALERT = "failed";
 struct DataFromInputFIle {
     size_t fileSize;
     FILE* inputFile;
-    size_t nStrings;
-    char* buffer;
     size_t bufferSize;
+    char* buffer;
+    size_t nStrings;
     string* strings;
+};
+
+struct strings_t{
+    string* ptr; // ptrs
+    size_t  count;
 };
 
 struct fileDescription {

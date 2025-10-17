@@ -3,7 +3,7 @@
 
 #include "general/file.h"
 #include "general/strFunc.h"
-#include "cmdOpcodes.h"
+#include "translator/cmd.h"
 
 #define DEBUG_TRANSLATOR 0
 
@@ -15,27 +15,36 @@ const int ASSEMBLE_FAILURE          = -1;
 const size_t N_LABELS  = 10;
 const int LABEL_POISON = 46878756;
 
+// enum paramType{
+//     NO_PARAM,
+//     LABEL_PARAM,
+//     REG_PARAM,
+//     NUMBER_PARAM
+// };
+
 struct label_t{
     const char* name;
     unsigned long hash;
-    int code;
+    int code; // 
 };
 
-struct command_t{
-    cmdOpcodes    code;
-    const char*   name;
-    unsigned long hash;
-};
 
-struct translator_t{
-    DataFromInputFIle spuCommandsText;
-    command_t*        cmds;
-    label_t*          ptrLabels;
-    buffer_t*         opcode;
+struct translator_t{ 
+    command_t* cmds; 
+    strings_t  input_buffer; 
+    buffer_t*  opcode; // 
+    label_t*   ptrLabels;
+
+    // // state
+    // // {
+    //     // cur string
+    //      size_t curCmd;
+        paramType  curCmdParType;
+    // // }
 };
 
 translator_t translatorCtor();
-bool loadTextCommands(translator_t* translator, const char* fileName);
+bool loadTextCommands(translator_t* translator, strings_t textCommands);
 bool assemble(translator_t* translator);
 bool translatorDtor(translator_t* translator);
 

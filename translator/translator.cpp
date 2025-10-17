@@ -1,32 +1,10 @@
 #include "translator.h"
+#include "cmd.h"
 #include "general/hash.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-command_t commands[] = {
-    {PUSH,    "PUSH",    0},
-    {POP,     "POP",     0},
-    {PUSHREG, "PUSHREG", 0},
-    {POPREG,  "POPREG",  0},
-    {ADD,     "ADD",     0},
-    {SUB,     "SUB",     0},
-    {MUL,     "MUL",     0},
-    {DIV,     "DIV",     0},
-    {SQRT,    "SQRT",    0},
-    {OUT,     "OUT",     0},
-    {HLT,     "HLT",     0},
-    {JMP,     "JMP",     0},
-    {JB,      "JB",      0},
-    {JBE,     "JBE",     0},
-    {JA,      "JA",      0},
-    {JAE,     "JAE",     0},
-    {JE,      "JE",      0},
-    {JNE,     "JNE",     0},
-    {CALL,    "CALL",    0},
-    {RET,     "RET",     0}
-};
 
 label_t nameLabels[N_LABELS] = {};
 
@@ -39,10 +17,13 @@ static void printNameTable();
 
 static void setSpuCommandsHash();
 static bool fillOpcodeBuffer(translator_t* translator);
-static bool addCommandParameter(int commandCode, translator_t* translator, size_t curString);
-static int  encodeCommand(char* curCommand);
+static bool addCommandParameter(translator_t* translator, size_t curString);
+static bool addRegParameter(translator_t* translator, size_t curString);
+static bool addLabelParameter(translator_t* translator, size_t curString);
+static bool addNumberParameter(translator_t* translator, size_t curString); 
+static bool encodeCommand(char* curCommand, translator_t* translator);
 static bool getLabel(translator_t* translator, size_t curString);
-static int  getLabelPar(char* curLabel);
+static int  getLabelPar(char* curLabel); // name const
 
 translator_t translatorCtor(){
     translator_t translator;
@@ -50,7 +31,9 @@ translator_t translatorCtor(){
     translator.cmds = commands;
     setSpuCommandsHash();
 
+    // label_t nameLabels[N_LABELS] = {};
     translator.ptrLabels = nameLabels;
+    poisonLabels(translator.ptrLabels);
 
     translator.opcode = (buffer_t*) calloc(1, sizeof(buffer_t)); 
     assert(translator.opcode);
@@ -58,11 +41,10 @@ translator_t translatorCtor(){
     return translator;
 }
 
-bool loadTextCommands(translator_t* translator, const char* fileName){
+bool loadTextCommands(translator_t* translator, strings_t textCommands){
     assert(translator);
-    assert(fileName);
 
-    if((parseStringsFile(&translator->spuCommandsText, (const char*) fileName)) == EXIT_FAILURE) return false;
+    translator->input_buffer = textCommands;
 
     return true;
 }
@@ -70,10 +52,8 @@ bool loadTextCommands(translator_t* translator, const char* fileName){
 bool assemble(translator_t* translator){
     assert(translator);
     
-    translator->opcode->ptr = (int*) calloc(sizeof(int), translator->spuCommandsText.nStrings * 2 + PREAMBLE_SIZE);
+    translator->opcode->ptr = (int*) calloc(sizeof(int), translator->input_buffer.count * 2 + PREAMBLE_SIZE);
     assert(translator->opcode);
-    
-    poisonLabels(translator->ptrLabels);
 
     fillOpcodeBuffer(translator);
     translator->opcode->size = 0;
@@ -88,8 +68,6 @@ bool assemble(translator_t* translator){
 bool translatorDtor(translator_t* translator){
     assert(translator);
     
-    free(translator->spuCommandsText.buffer); // 
-    free(translator->spuCommandsText.strings); // 
     free(translator->opcode);
 
     return true;
@@ -98,119 +76,113 @@ bool translatorDtor(translator_t* translator){
 static bool fillOpcodeBuffer(translator_t* translator){
     assert(translator);
 
-    for(size_t curString = 0; curString < translator->spuCommandsText.nStrings; curString++){
+    for(size_t curString = 0; curString < translator->input_buffer.count; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
 
-        ///Обработка строки если она метка
         if(getLabel(translator, curString)) continue;
 
-        sscanf(translator->spuCommandsText.strings[curString].stringPtr, "%s", curCommand);
+        sscanf(translator->input_buffer.ptr[curString].ptr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
-        int commandCode = encodeCommand(curCommand); 
-        if(commandCode == ASSEMBLE_FAILURE) continue;
-        translator->opcode->ptr[translator->opcode->size] = commandCode;
+        if(!encodeCommand(curCommand, translator)) break; 
         
-        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]))
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size - 1]))
         
-        (translator->opcode->size)++;
-
-        addCommandParameter(commandCode, translator, curString);
+        addCommandParameter(translator, curString);
 
         ON_DEBUG(printf("\n"))
-        
     }
 
     return true;
 }
 
-static bool addCommandParameter(int commandCode, translator_t* translator, size_t curString){
-    assert(translator);
-
-    if((commandCode == PUSHREG) || 
-       (commandCode == POPREG)){
-        char reg[REGISTER_NAME_MAX_SIZE];
-        sscanf(translator->spuCommandsText.strings[curString].stringPtr, "%*s %s", reg);
-        if (reg[0] == 'R'){
-            translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
-        }
-        else{
-            translator->opcode->ptr[translator->opcode->size] = reg[0] - A_ASCII_CODE;
-        }
-
-        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
-    }
-    else if((commandCode == RET)){
-        translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
-    }
-    /// добавить структуры
-    
-    else if((commandCode == JMP) ||
-            (commandCode == JB)  ||
-            (commandCode == JBE) ||
-            (commandCode == JA)  ||
-            (commandCode == JAE) ||
-            (commandCode == JE)  ||
-            (commandCode == JNE) ||
-            (commandCode == CALL)){
-        int   labelPar     = 0;
-        char  labelParName[20];
-
-        // printNameTable();
-        if(sscanf(translator->spuCommandsText.strings[curString].stringPtr, "%*s :%s", labelParName)){
-            printf("labelParName: %s\n", labelParName);
-            labelPar = getLabelPar(labelParName);
-            if(labelPar == LABEL_POISON){
-                (translator->opcode->size)++;
-                return true;
-            }
-
-            printf("labelPar: %d\n", labelPar);
-
-            translator->opcode->ptr[translator->opcode->size] = labelPar;
-            (translator->opcode->size)++;
-            return true;
-        }
-        else{
-            printf("PROBLEM\n");
-            
-            return false;
-        }
-        
-    }
-
-    else if((commandCode != ADD) &&
-            (commandCode != SUB) &&
-            (commandCode != MUL) &&
-            (commandCode != DIV) &&
-            (commandCode != OUT) &&
-            (commandCode != HLT)){
-        int pushParameter = 0;
-        sscanf(translator->spuCommandsText.strings[curString].stringPtr, "%*s %d", &pushParameter);
-
-        translator->opcode->ptr[translator->opcode->size] = pushParameter;
-        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
-        
-    }
-
-    (translator->opcode->size)++;
-
-    return true;
-}
-
-static int encodeCommand(char* curCommand){
+static bool encodeCommand(char* curCommand, translator_t* translator){
     assert(curCommand);
 
-    unsigned long curCommandHash = hash(curCommand, myStrLen(curCommand, '\0'));
+    unsigned long curCommandHash = hash(curCommand, myStrLen(curCommand));
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command_t); curCommandInd++){
         ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", curCommandHash == commands[curCommandInd].hash))
         
         if(curCommandHash == commands[curCommandInd].hash){
             ON_DEBUG(printf("Code to return: %d\n", commands[curCommandInd].code))
-            return commands[curCommandInd].code;
+            
+            translator->opcode->ptr[translator->opcode->size] = commands[curCommandInd].code;
+            translator->curCmdParType = commands[curCommandInd].param;
+            
+            (translator->opcode->size)++;
+
+            return true;
         }
     }
     
-    return ASSEMBLE_FAILURE;
+    return false;
+}
+
+static bool addCommandParameter(translator_t* translator, size_t curString){
+    assert(translator);
+
+    switch(translator->curCmdParType){
+        case REG_PARAM:    addRegParameter(translator, curString);    break;
+        case LABEL_PARAM:  addLabelParameter(translator, curString);  break;
+        case NUMBER_PARAM: addNumberParameter(translator, curString); break;
+        case NO_PARAM:     break;
+        default: break;
+    }
+
+    return true;
+}
+///
+static bool addRegParameter(translator_t* translator, size_t curString){
+    assert(translator);
+
+    char reg[REGISTER_NAME_MAX_SIZE];
+    sscanf(translator->input_buffer.ptr[curString].ptr, "%*s %s", reg);
+    if (reg[0] == 'R'){
+        translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
+    }
+    else{
+        translator->opcode->ptr[translator->opcode->size] = reg[0] - A_ASCII_CODE;
+    }
+
+    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
+
+    return true;
+}
+
+static bool addLabelParameter(translator_t* translator, size_t curString){
+    assert(translator);
+
+    int   labelPar     = 0;
+    char  labelParName[20];
+
+    if(sscanf(translator->input_buffer.ptr[curString].ptr, "%*s :%s", labelParName)){
+        printf("labelParName: %s\n", labelParName);
+        labelPar = getLabelPar(labelParName);
+        printf("labelPar: %d\n", labelPar);
+
+        if(labelPar != LABEL_POISON){
+            translator->opcode->ptr[translator->opcode->size] = labelPar;
+        } 
+
+        (translator->opcode->size)++;
+        return true;
+    }
+    else{
+        printf("PROBLEM\n");
+        
+        return false;
+    }
+}
+
+static bool addNumberParameter(translator_t* translator, size_t curString){
+    assert(translator);
+
+    int pushParameter = 0; // 
+    sscanf(translator->input_buffer.ptr[curString].ptr, "%*s %d", &pushParameter);
+
+    translator->opcode->ptr[translator->opcode->size] = pushParameter;
+    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
+
+    return true;
 }
 
 static bool getLabel(translator_t* translator, size_t curString){
@@ -218,8 +190,8 @@ static bool getLabel(translator_t* translator, size_t curString){
 
     static size_t curLabelInd = 0;
 
-    char curLabelName[20];
-    if(sscanf(translator->spuCommandsText.strings[curString].stringPtr, ":%s", curLabelName)){
+    char curLabelName[20]; // 20
+    if(sscanf(translator->input_buffer.ptr[curString].ptr, ":%s", curLabelName)){
         printf("Замена\n");
         printf("curByteBufferSize: %d\n", (int)translator->opcode->size);
         printNameTable();
