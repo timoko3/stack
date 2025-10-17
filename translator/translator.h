@@ -22,23 +22,22 @@ struct label_t{
 };
 
 struct command_t{
-    cmdOpcodes code;
-    const char* name;
+    cmdOpcodes    code;
+    const char*   name;
     unsigned long hash;
 };
 
 struct translator_t{
     DataFromInputFIle spuCommandsText;
-    command_t* cmds;
-    label_t*   ptrLabels;
-    buffer_t*    opcode;
+    command_t*        cmds;
+    label_t*          ptrLabels;
+    buffer_t*         opcode;
 };
 
-void setSpuCommandsHash();
 translator_t translatorCtor();
 bool loadTextCommands(translator_t* translator, const char* fileName);
 bool assemble(translator_t* translator);
-bool fillByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer);
+bool translatorDtor(translator_t* translator);
 
 #if DEBUG_TRANSLATOR
 void printByteCodeBuffer(int* buffer, size_t curByteBufferSize);

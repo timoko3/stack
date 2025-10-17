@@ -30,7 +30,7 @@ int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName)
 size_t getFileSize(const char* fileName);
 FILE* myOpenFile(fileDescription* file);
 
-void writeOpcode(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName);
+void writeOpcode(buffer_t* buffer, const char* fileName);
 bool getIntNumsToBuffer(fileDescription file, size_t fileSize, int** buffer);
 
 #endif /*FILE_PARSE_H*/

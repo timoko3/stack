@@ -13,8 +13,6 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 static void printBuffer(char* buffer);
 #endif /* DEBUG */
 
-
-
 int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName){
     assert(DataFromInputFIle);
     assert(fileName);
@@ -118,8 +116,8 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
     return strings;
 }
 
-void writeOpcode(int* byteCodeBuffer, size_t curByteBufferSize, const char* fileName){
-    assert(byteCodeBuffer);
+void writeOpcode(buffer_t* buffer, const char* fileName){
+    assert(buffer);
     assert(fileName);
 
     fileDescription byteCode = {
@@ -130,8 +128,8 @@ void writeOpcode(int* byteCodeBuffer, size_t curByteBufferSize, const char* file
     FILE* byteCodeFile = myOpenFile(&byteCode);
     assert(byteCodeFile);
 
-    size_t written = fwrite(byteCodeBuffer, sizeof(int), curByteBufferSize, byteCodeFile);
-    if(written != curByteBufferSize){
+    size_t written = fwrite(buffer->ptr, sizeof(int), buffer->size, byteCodeFile);
+    if(written != buffer->size){
         perror("fwrite error");
     }
 

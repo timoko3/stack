@@ -64,15 +64,15 @@ bool getOpcodeBuffer(processor* spu, const char* fileName){
     assert(spu);
     assert(fileName);
 
-    spu->sizeByteCode = getFileSize(fileName);
-    spu->byteCode = (int*) calloc(1, spu->sizeByteCode);
-    assert(spu->byteCode);
+    spu->opcode.size = getFileSize(fileName) / sizeof(int);
+    spu->opcode.ptr = (int*) calloc(spu->opcode.size, sizeof(int));
+    assert(spu->opcode.ptr);
 
     fileDescription byteCodeFileDes = {
         fileName,
         "rb"
     };
-    getIntNumsToBuffer(byteCodeFileDes, spu->sizeByteCode, &spu->byteCode);
+    getIntNumsToBuffer(byteCodeFileDes, spu->opcode.size * sizeof(int), &spu->opcode.ptr);
 
     return true;
 }
@@ -91,7 +91,7 @@ bool runProcessor(processor* spu){
     assert(spu);
 
     bool result = false;
-    while(spu->pc < (spu->sizeByteCode / sizeof(int))){
+    while(spu->pc < (spu->opcode.size)){
         if(executeCommand(spu) == false) return false;
     }
 
@@ -104,7 +104,7 @@ bool executeCommand(processor* spu){
     processorDump(spu);
 
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commandsHandler) / sizeof(command); curCommandInd++){
-        if(commandsHandler[curCommandInd].code == spu->byteCode[spu->pc]){
+        if(commandsHandler[curCommandInd].code == spu->opcode.ptr[spu->pc]){
 
             if(commandsHandler[curCommandInd].ptr(spu) == false) return false;
             
@@ -121,14 +121,17 @@ processorStatus processorDtor(processor* spu){
     stackDtor(&spu->stk);
     stackDtor(&spu->funcRetAddr);
 
-    poisonMemory(spu->byteCode, spu->sizeByteCode);
-    free(spu->byteCode);
-    spu->byteCode = NULL;
+    poisonMemory(spu->opcode.ptr, spu->opcode.size);
+    free(spu->opcode.ptr);
+    spu->opcode.ptr = NULL;
+
+    spu->opcode.size = (size_t) rand();
+
+    poisonMemory(&spu->opcode, sizeof(buffer_t));
 
     poisonMemory(spu->regs, sizeof(spu->regs));
     
     spu->pc = (size_t) rand();
-    spu->sizeByteCode = (size_t) rand();
 
     return SPU_PROCESS_OK;
 }
@@ -149,7 +152,7 @@ static void processorDump(processor* spu){
     printf("\n");
 
     printf("\tCode:");
-    printByteCode(spu->byteCode, spu->sizeByteCode, spu->pc);
+    printByteCode(spu->opcode.ptr, spu->opcode.size, spu->pc);
     printf("\n");
 
     printf("\tRegs:");
@@ -171,7 +174,7 @@ static void simplePrintStack(stack* stk){
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc){
     assert(byteCode);
 
-    for(size_t curByte = 0; curByte < byteCodeSize; curByte++){
+    for(size_t curByte = 0; curByte < byteCodeSize * sizeof(int); curByte++){
         if((curByte % 4) == 0) printf(" ");
         if(((curByte % 16) == 0)) printf("\n\t\t");
         if((curByte == pc * 4)){
@@ -298,7 +301,7 @@ static bool hlt(processor* spu){
 static bool jmp(processor* spu){
     assert(spu);
 
-    spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
 
     return true;
 }
@@ -312,7 +315,7 @@ static bool jmpCond(processor* spu){
     stackPop(&spu->stk, &superiorStackElem);
     stackPop(&spu->stk, &preSuperiorStackElem);    
 
-    int jumpSign = spu->byteCode[spu->pc];
+    int jumpSign = spu->opcode.ptr[spu->pc];
 
     bool doJump = false;
     switch(jumpSign){
@@ -327,7 +330,7 @@ static bool jmpCond(processor* spu){
     }
     
     if(doJump){
-        spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+        spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
     }
     else{
         (spu->pc)++;
@@ -340,7 +343,7 @@ static bool callFunc(processor* spu){
     assert(spu);
 
     stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 1);
-    spu->pc = (size_t) spu->byteCode[spu->pc + 1];
+    spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
     
     return true;
 }
@@ -360,7 +363,7 @@ static bool returnFunc(processor* spu){
 static bool push(processor* spu){
     assert(spu);
 
-    stackData_t pushParameter = spu->byteCode[spu->pc + 1];
+    stackData_t pushParameter = spu->opcode.ptr[spu->pc + 1];
     stackPush(&(spu->stk), pushParameter); 
     spu->pc++;
 
@@ -372,7 +375,7 @@ static bool push(processor* spu){
 static bool pushreg(processor* spu){
     assert(spu);
 
-    int curReg = spu->regs[spu->byteCode[spu->pc + 1]];
+    int curReg = spu->regs[spu->opcode.ptr[spu->pc + 1]];
     printf("curReg : %d\n", curReg);
     stackPush(&spu->stk, curReg);
 
@@ -384,7 +387,7 @@ static bool pushreg(processor* spu){
 static bool popreg(processor* spu){
     assert(spu);
 
-    stackPop(&spu->stk, &(spu->regs[spu->byteCode[spu->pc + 1]]));
+    stackPop(&spu->stk, &(spu->regs[spu->opcode.ptr[spu->pc + 1]]));
 
     (spu->pc)++;
 

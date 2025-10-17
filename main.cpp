@@ -8,25 +8,36 @@ const char* const FLAG_OUTPUT_FILE = "-o";
 const char* textCommandsFileName   = "factorial.txt"; 
 const char* outputByteCodeFileName = "factorial.asm";
 
+#define BUFFER_FROM_FILE
+
 int main(void){
     translator_t translator = translatorCtor();
 
     loadTextCommands(&translator, textCommandsFileName);
 
     assemble(&translator);
-
-    writeOpcode(translator.opcode->ptr, translator.opcode->size, (const char*) outputByteCodeFileName);
+    
+    #ifdef BUFFER_FROM_FILE
+    writeOpcode(translator.opcode, (const char*) outputByteCodeFileName);
+    #endif /* BUFFER_FROM_FILE */
 
     processor spu1; 
-    getOpcodeBuffer(&spu1, outputByteCodeFileName); ///
     processorCtor(&spu1);
+    #ifndef BUFFER_FROM_FILE
+    spu1.opcode.ptr = translator.opcode->ptr;
+    spu1.opcode.size = translator.opcode->size;
+    #endif /* BUFFER_FROM_FILE */
+    #ifdef BUFFER_FROM_FILE
+    free(translator.opcode->ptr);
+    #endif /* BUFFER_FROM_FILE */
+
+    translatorDtor(&translator);
+
+    #ifdef BUFFER_FROM_FILE
+    getOpcodeBuffer(&spu1, outputByteCodeFileName); ///  
+    #endif /* BUFFER_FROM_FILE */  
 
     runProcessor(&spu1);
-
+    
     processorDtor(&spu1);
-
-    free(translator.spuCommandsText.buffer); // 
-    free(translator.spuCommandsText.strings); // 
-    free(translator.opcode->ptr);
-    free(translator.opcode);
 }

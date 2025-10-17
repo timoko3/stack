@@ -3,14 +3,14 @@
 
 #include "general/stack/stack.h"
 #include "cmdOpcodes.h"
+#include "general/strFunc.h" ///  
 
 struct processor{
     stack stk;
     stack funcRetAddr;
     int regs[N_REGISTERS] = {};
     size_t pc; // pointer to command
-    int* byteCode;
-    size_t sizeByteCode;
+    buffer_t opcode;
 };
 
 enum processorStatus{

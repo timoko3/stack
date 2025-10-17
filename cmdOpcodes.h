@@ -26,11 +26,6 @@ enum cmdOpcodes{
     POPREG
 };
 
-struct buffer_t{
-    int* ptr;
-    size_t size;
-};
-
 const size_t N_REGISTERS   = 10;
 const size_t PREAMBLE_SIZE = 2;
 const int SIGNATURE        = 999;

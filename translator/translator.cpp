@@ -37,6 +37,8 @@ label_t nameLabels[N_LABELS] = {};
 static void poisonLabels(label_t* labels);
 static void printNameTable();
 
+static void setSpuCommandsHash();
+static bool fillOpcodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer);
 static bool addCommandParameter(int commandCode, char* stringPtr, int* byteCodeBuffer, size_t* curByteBufferSize);
 static int  encodeCommand(char* curCommand);
 static int getLabelPar(char* curLabel);
@@ -49,7 +51,7 @@ translator_t translatorCtor(){
 
     translator.ptrLabels = nameLabels;
 
-    translator.opcode = (buffer_t*) calloc(1, sizeof(buffer_t)); // или malloc + memset
+    translator.opcode = (buffer_t*) calloc(1, sizeof(buffer_t)); 
     assert(translator.opcode);
 
     return translator;
@@ -72,17 +74,30 @@ bool assemble(translator_t* translator){
     
     poisonLabels(translator->ptrLabels);
 
-    fillByteCodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
+    fillOpcodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
     translator->opcode->size = 0;
     printf("*************\n");
-    fillByteCodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
+    fillOpcodeBuffer(&translator->spuCommandsText, &translator->opcode->size, translator->opcode->ptr);
     
     ON_DEBUG(printf("curByteBufferSize: %lu\n", translator->opcode->size))
 
     return true;
 }   
 
-bool fillByteCodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer){
+bool translatorDtor(translator_t* translator){
+    assert(translator);
+    
+    free(translator->spuCommandsText.buffer); // 
+    free(translator->spuCommandsText.strings); // 
+    free(translator->opcode);
+
+    return true;
+}
+
+static bool fillOpcodeBuffer(DataFromInputFIle* spuTextCommands, size_t* curByteBufferSize, int* byteCodeBuffer){
+    assert(spuTextCommands);
+    assert(curByteBufferSize);
+
     size_t curLabelInd = 0;
     for(size_t curString = 0; curString < spuTextCommands->nStrings; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
@@ -230,7 +245,7 @@ static int getLabelPar(char* curLabel){
     return LABEL_POISON;
 }
 
-void setSpuCommandsHash(){
+static void setSpuCommandsHash(){
     for(size_t curCommand = 0; curCommand < sizeof(commands) / sizeof(command_t); curCommand++){
         commands[curCommand].hash = hash(commands[curCommand].name, myStrLen(commands[curCommand].name, '\0'));
     }
