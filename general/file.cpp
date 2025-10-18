@@ -13,31 +13,31 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings);
 static void printBuffer(char* buffer);
 #endif /* DEBUG */
 
-int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName){
-    assert(DataFromInputFIle);
+int parseStringsFile(data* data, const char* fileName){
+    assert(data);
     assert(fileName);
 
-    if((DataFromInputFIle->fileSize = getFileSize(fileName)) == EXIT_FAILURE) return EXIT_FAILURE;
+    if((data->fileSize = getFileSize(fileName)) == EXIT_FAILURE) return EXIT_FAILURE;
 
     fileDescription inputFile = {
         fileName, 
         "rb"
     };
 
-    DataFromInputFIle->inputFile = myOpenFile(&inputFile);
-    if(!DataFromInputFIle->inputFile) return EXIT_FAILURE;
-    assert(DataFromInputFIle->inputFile);
+    data->inputFile = myOpenFile(&inputFile);
+    if(!data->inputFile) return EXIT_FAILURE;
+    assert(data->inputFile);
 
-    DataFromInputFIle->buffer = getTextToBuffer(DataFromInputFIle->inputFile, DataFromInputFIle->fileSize);
-    assert(DataFromInputFIle->buffer);
+    data->buffer = getTextToBuffer(data->inputFile, data->fileSize);
+    assert(data->buffer);
 
-    fclose(DataFromInputFIle->inputFile);
+    fclose(data->inputFile);
 
-    DataFromInputFIle->nStrings = countStrings(DataFromInputFIle->buffer, DataFromInputFIle->fileSize, END_STR);
-    DataFromInputFIle->bufferSize = DataFromInputFIle->fileSize + SIZE_OF_END_FILE;
+    data->nStrings = countStrings(data->buffer, data->fileSize, END_STR);
+    data->bufferSize = data->fileSize + SIZE_OF_END_FILE;
     
-    DataFromInputFIle->strings = divideBufferToStringsStructure(DataFromInputFIle->buffer, DataFromInputFIle->nStrings);
-    assert(DataFromInputFIle->strings);
+    data->strings = divideBufferToStringsStructure(data->buffer, data->nStrings);
+    assert(data->strings);
 
     return 0;
 }

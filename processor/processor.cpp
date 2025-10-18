@@ -1,28 +1,20 @@
 #include "processor.h"
 #include "cmd.h"
 #include "general/poison.h"
-#include "general/file.h"
+#include "general/file.h" 
 
 #include <math.h>
 
-static bool spuCommand (processor* spu, command cmd);
-static bool calcCommand(processor* spu, command cmd);
+static bool spuCommand    (processor* spu, command cmd);
 
-static bool unaryCommand  (processor* spu, handlers handler);
-static bool binaryCommand (processor* spu, handlers handler);
+static bool calcCommand   (processor* spu, command cmd);
+static bool unaryCalcCommand  (processor* spu, handlers handler);
+static bool binaryCalcCommand (processor* spu, handlers handler);
 
 static void processorDump(processor* spu);
 static void simplePrintStack(stack* stk);
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
-
-// bool JBcmp(int arg1, int arg2) { return arg1 <  arg2; }
-// bool JBcmp(int arg1, int arg2) { return arg1 <= arg2; }
-// bool JBcmp(int arg1, int arg2) { return arg1 >  arg2; }
-// bool JBcmp(int arg1, int arg2) { return arg1 >= arg2; }
-// bool JBcmp(int arg1, int arg2) { return arg1 == arg2; }
-// bool JBcmp(int arg1, int arg2) { return arg1 != arg2; }
-// jmpJB(...){ jmpCond (JBcond); }
 
 typedef bool (*comparatorPtr) (cmdParam_t comparedNum1, cmdParam_t comparedNum2, cmdParam_t* result);
 
@@ -40,31 +32,40 @@ conditionalJump conditionalJumps[]{
     {JNE, ne}
 };
 
-bool getOpcodeBuffer(processor* spu, const char* fileName){
-    assert(spu);
-    assert(fileName);
+// bool getOpcodeBuffer(processor* spu, const char* fileName){
+//     assert(spu);
+//     assert(fileName);
 
-    spu->opcode.size = getFileSize(fileName) / sizeof(int);
-    spu->opcode.ptr = (int*) calloc(spu->opcode.size, sizeof(int));
-    assert(spu->opcode.ptr);
+//     spu->opcode.size = getFileSize(fileName) / sizeof(int);
+//     spu->opcode.ptr = (int*) calloc(spu->opcode.size, sizeof(int));
+//     assert(spu->opcode.ptr);
 
-    fileDescription byteCodeFileDes = {
-        fileName,
-        "rb"
-    };
-    getIntNumsToBuffer(byteCodeFileDes, spu->opcode.size * sizeof(int), &spu->opcode.ptr);
+//     fileDescription byteCodeFileDes = {
+//         fileName,
+//         "rb"
+//     };
+//     getIntNumsToBuffer(byteCodeFileDes, spu->opcode.size * sizeof(int), &spu->opcode.ptr);
 
-    return true;
-}
+//     return true;
+// }
+
 
 processorStatus processorCtor(processor* spu){
     assert(spu);
-
+    
     stackCtor(&spu->stk, 10);
     stackCtor(&spu->funcRetAddr, 10);
     spu->pc = 0;
-
+    
     return SPU_PROCESS_OK;
+}
+
+bool loadOpcode(processor* spu, buffer_t opcode){
+    assert(spu);
+
+    spu->opcode = opcode;
+
+    return true;
 }
 
 bool runProcessor(processor* spu){
@@ -106,17 +107,9 @@ processorStatus processorDtor(processor* spu){
     stackDtor(&spu->stk);
     stackDtor(&spu->funcRetAddr);
 
-    poisonMemory(spu->opcode.ptr, spu->opcode.size);
-    free(spu->opcode.ptr);
-    spu->opcode.ptr = NULL;
-
-    //
-    spu->opcode.size = (size_t) rand();
-
-    poisonMemory(&spu->opcode, sizeof(buffer_t));
     poisonMemory(spu->regs, sizeof(spu->regs));
-    //
-    spu->pc = (size_t) rand();
+    
+    poisonMemory(&spu->pc, sizeof(spu->pc));
 
     return SPU_PROCESS_OK;
 }
@@ -134,8 +127,8 @@ static bool calcCommand(processor* spu, command cmd){
 
     bool check = true;
     switch(cmd.param){
-        case UNARY:  check = unaryCommand(spu,  cmd.handler); break;
-        case BINARY: check = binaryCommand(spu, cmd.handler); break;
+        case UNARY:  check = unaryCalcCommand(spu,  cmd.handler); break;
+        case BINARY: check = binaryCalcCommand(spu, cmd.handler); break;
         case NO_CMD_PARAM: break;
         default: break;
     }
@@ -143,7 +136,7 @@ static bool calcCommand(processor* spu, command cmd){
     return check;
 }
 
-static bool unaryCommand(processor* spu, handlers handler){
+static bool unaryCalcCommand(processor* spu, handlers handler){
     assert(spu);
     
     stackData_t param = 0;
@@ -158,7 +151,7 @@ static bool unaryCommand(processor* spu, handlers handler){
     return check;
 }   
 
-static bool binaryCommand(processor* spu, handlers handler){
+static bool binaryCalcCommand(processor* spu, handlers handler){
     assert(spu);
     
     stackData_t param1 = 0;

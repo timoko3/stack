@@ -13,7 +13,7 @@ struct buffer_t{
     size_t size;
 };
 
-const int UPPER_SYM_MIN        = 'A'; 
+const int UPPER_SYM_MIN        = (int) 'A'; 
 const int UPPER_SYM_MAX        = 'Z'; 
 const int UPPER_TO_LOWER_SHIFT = 'A' - 'a'; 
 const int SIZE_OF_END_FILE     = 1; 

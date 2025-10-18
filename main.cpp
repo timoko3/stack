@@ -1,8 +1,7 @@
 #include "processor/processor.h"
 #include "translator/translator.h"
 #include "general/file.h"
-
-#include "processor/cmd.h"
+#include "general/poison.h"
 
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
@@ -13,42 +12,33 @@ const char* outputByteCodeFileName = "factorial.asm";
 // #define BUFFER_FROM_FILE
 
 int main(void){
-    translator_t translator = translatorCtor();
-
-    DataFromInputFIle buf = {};
+    data buf = {};
     if((parseStringsFile(&buf, textCommandsFileName)) == EXIT_FAILURE) return false;
-    
+
+    translator_t translator;
+    translatorCtor(&translator);
+
     loadTextCommands(&translator, {buf.strings, buf.nStrings});
 
     assemble(&translator);
-    
-    #ifdef BUFFER_FROM_FILE
-    writeOpcode(translator.opcode, (const char*) outputByteCodeFileName);
-    #endif /* BUFFER_FROM_FILE */
+
+    buffer_t* opcode = &translator.opcode;
+
+    translatorDtor(&translator);
+    free(buf.buffer); 
+    free(buf.strings); 
 
     processor spu1; 
     processorCtor(&spu1);
-    printf("Номер команды: %d, парметр: %d\n", translator.opcode->ptr[translator.opcode->size - 2], translator.opcode->ptr[translator.opcode->size - 1]);
-    #ifndef BUFFER_FROM_FILE
-    spu1.opcode.ptr = translator.opcode->ptr;
-    spu1.opcode.size = translator.opcode->size;
-    #endif /* BUFFER_FROM_FILE */
-    #ifdef BUFFER_FROM_FILE
-    free(translator.opcode->ptr);
-    #endif /* BUFFER_FROM_FILE */
 
-    translatorDtor(&translator);
-
-    #ifdef BUFFER_FROM_FILE
-    getOpcodeBuffer(&spu1, outputByteCodeFileName); ///  
-    #endif /* BUFFER_FROM_FILE */  
+    loadOpcode(&spu1, *opcode);
 
     runProcessor(&spu1);
     
-    // stackDump(&spu1.stk, __FUNCTION__, __FILE__, __LINE__);
-
-    free(buf.buffer); // 
-    free(buf.strings); // 
-    
     processorDtor(&spu1);
+
+    poisonMemory(spu1.opcode.ptr, spu1.opcode.size);
+    free(spu1.opcode.ptr);
+    spu1.opcode.ptr = NULL;
+    poisonMemory(&spu1.opcode.size, sizeof(spu1.opcode.size));
 }

@@ -11,7 +11,7 @@ const char* const ALERT_STR_FROM_FILE_TO_STRUCT_FAILURE = "Ошибка при �
 
 const char* const FUNCTION_FAILURE_ALERT = "failed";
 
-struct DataFromInputFIle {
+struct data {
     size_t fileSize;
     FILE* inputFile;
     size_t bufferSize;
@@ -21,7 +21,7 @@ struct DataFromInputFIle {
 };
 
 struct strings_t{
-    string* ptr; // ptrs
+    string* ptrs; // ptrs
     size_t  count;
 };
 
@@ -30,7 +30,7 @@ struct fileDescription {
     const char* openMode;
 };
 
-int parseStringsFile(DataFromInputFIle* DataFromInputFIle, const char* fileName);
+int parseStringsFile(data* data, const char* fileName);
 
 size_t getFileSize(const char* fileName);
 FILE* myOpenFile(fileDescription* file);

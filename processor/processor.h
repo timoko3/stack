@@ -3,13 +3,13 @@
 
 #include "general/stack/stack.h"
 #include "cmdOpcodes.h"
-#include "general/strFunc.h" ///  
+#include "general/strFunc.h" 
 
 struct processor{
     stack stk;
     stack funcRetAddr;
     int regs[N_REGISTERS] = {};
-    size_t pc; // pointer to command
+    size_t pc; 
     buffer_t opcode;
 };
 
@@ -19,9 +19,10 @@ enum processorStatus{
 };
 
 processorStatus processorCtor(processor* spu);
-processorStatus processorDtor(processor* spu);
-bool getOpcodeBuffer(processor* spu, const char* fileName);
+bool loadOpcode(processor* spu, buffer_t opcode);
+// bool getOpcodeBuffer(processor* spu, const char* fileName);
 bool runProcessor(processor* spu);
 bool executeCommand(processor* spu);
+processorStatus processorDtor(processor* spu);
 
 #endif /* PROCESSOR_H */

@@ -3,18 +3,41 @@
 
 #include "cmdOpcodes.h"
 
-enum paramType{
+const int    ASSEMBLE_FAILURE       = -1;
+
+const size_t COMMAND_NAME_MAX_SIZE  = 10;
+const size_t REGISTER_NAME_MAX_SIZE = 5;
+const size_t LABEL_NAME_MAX_SIZE    = 20;
+
+const size_t N_LABELS     = 10;
+const int    LABEL_POISON = 46878756;
+
+typedef int value;
+struct label_t{
+    const char* name;
+    unsigned long hash;
+    value addr;
+};
+
+enum param_t{
     NO_PARAM,
     LABEL_PARAM,
     REG_PARAM,
     NUMBER_PARAM
 };
 
+struct state_t{
+    param_t par;
+    size_t  StringInd;
+    char*   cmdName;
+    char*   labelName;
+};
+
 struct command_t{
     cmdOpcodes    code;
     const char*   name;
     unsigned long hash;
-    paramType     param;
+    param_t       param;
 };
 
 static command_t commands[] = {

@@ -1,42 +1,34 @@
 #include "translator.h"
-#include "cmd.h"
 #include "general/hash.h"
+#include "general/poison.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-label_t nameLabels[N_LABELS] = {};
-
 #define ON_DEBUG(expression) if(DEBUG_TRANSLATOR){expression;};
 
-////// redactor this file after prev mentoring
-
 static void poisonLabels(label_t* labels);
-static void printNameTable();
-
 static void setSpuCommandsHash();
-static bool fillOpcodeBuffer(translator_t* translator);
-static bool addCommandParameter(translator_t* translator, size_t curString);
-static bool addRegParameter(translator_t* translator, size_t curString);
-static bool addLabelParameter(translator_t* translator, size_t curString);
-static bool addNumberParameter(translator_t* translator, size_t curString); 
-static bool encodeCommand(char* curCommand, translator_t* translator);
-static bool getLabel(translator_t* translator, size_t curString);
-static int  getLabelPar(char* curLabel); // name const
+// static void printNameTable();
 
-translator_t translatorCtor(){
-    translator_t translator;
+static bool assemblePass(translator_t* translator);
+static bool getLabel(translator_t* translator);
+static bool encodeCommand(translator_t* translator);
 
-    translator.cmds = commands;
+static bool addCommandParameter(translator_t* translator);
+static bool addRegParameter(translator_t* translator);
+static bool addNumberParameter(translator_t* translator); 
+static bool addLabelParameter(translator_t* translator);
+static int  getCmdNumber(translator_t* translator);
+
+bool translatorCtor(translator_t* translator){
+    translator->cmds = commands;
     setSpuCommandsHash();
 
-    // label_t nameLabels[N_LABELS] = {};
-    translator.ptrLabels = nameLabels;
-    poisonLabels(translator.ptrLabels);
-
-    translator.opcode = (buffer_t*) calloc(1, sizeof(buffer_t)); 
-    assert(translator.opcode);
+    static label_t nameLabels[N_LABELS] = {};
+    translator->labels = nameLabels;
+    poisonLabels(translator->labels);
 
     return translator;
 }
@@ -52,54 +44,77 @@ bool loadTextCommands(translator_t* translator, strings_t textCommands){
 bool assemble(translator_t* translator){
     assert(translator);
     
-    translator->opcode->ptr = (int*) calloc(sizeof(int), translator->input_buffer.count * 2 + PREAMBLE_SIZE);
-    assert(translator->opcode);
+    translator->opcode.ptr = (int*) calloc(sizeof(int), translator->input_buffer.count * 2 + PREAMBLE_SIZE);
+    assert(translator->opcode.ptr);
 
-    fillOpcodeBuffer(translator);
-    translator->opcode->size = 0;
+    assemblePass(translator);
+    translator->opcode.size = 0;
     printf("*************\n");
-    fillOpcodeBuffer(translator);
+    assemblePass(translator);
     
-    ON_DEBUG(printf("curByteBufferSize: %lu\n", translator->opcode->size))
+    ON_DEBUG(printf("curByteBufferSize: %lu\n", translator->opcode.size))
 
     return true;
 }   
 
 bool translatorDtor(translator_t* translator){
     assert(translator);
-    
-    free(translator->opcode);
+
+    poisonMemory(translator->cmds, sizeof(translator->cmds));
+    poisonMemory(&translator->input_buffer, sizeof(translator->input_buffer));
+    poisonMemory(translator->labels, sizeof(translator->labels));
+    poisonMemory(&translator->curState, sizeof(translator->curState));
 
     return true;
 }
 
-static bool fillOpcodeBuffer(translator_t* translator){
+static bool assemblePass(translator_t* translator){
     assert(translator);
 
-    for(size_t curString = 0; curString < translator->input_buffer.count - 1; curString++){
-        char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
+    for(size_t curStringInd = 0; curStringInd < translator->input_buffer.count - 1; curStringInd++){
+        translator->curState.StringInd = curStringInd;
 
-        if(getLabel(translator, curString)) continue;
+        if(getLabel(translator)) continue;
 
-        sscanf(translator->input_buffer.ptr[curString].ptr, "%s", curCommand);
-        ON_DEBUG(printf("curCommand: %s\n", curCommand))
-        if(!encodeCommand(curCommand, translator)) break; 
+        char curCmdName[COMMAND_NAME_MAX_SIZE] = {0};
+        sscanf(translator->input_buffer.ptrs[curStringInd].ptr, "%s", curCmdName);
+        translator->curState.cmdName = curCmdName;
+        ON_DEBUG(printf("curCmdName: %s\n", curCmdName))
+        if(!encodeCommand(translator)) break; 
         
-        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size - 1]))
+        ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode.ptr[translator->opcode.size - 1]))
         
-        addCommandParameter(translator, curString);
-        printf("curString: %lu\n", curString);
-        printf("curString: %lu\n", translator->input_buffer.count);
+        addCommandParameter(translator);
+        printf("curStringInd: %lu\n", curStringInd);
+        printf("curStringInd: %lu\n", translator->input_buffer.count);
         ON_DEBUG(printf("\n"))
     }
     printf("FILLED\n");
     return true;
 }
 
-static bool encodeCommand(char* curCommand, translator_t* translator){
-    assert(curCommand);
+static bool getLabel(translator_t* translator){
+    assert(translator);
 
-    unsigned long curCommandHash = hash(curCommand, myStrLen(curCommand));
+    static size_t curLabelInd = 0;
+
+    char curLabelName[LABEL_NAME_MAX_SIZE]; 
+    if(sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, ":%s", curLabelName)){
+        translator->labels[curLabelInd].addr = (int) translator->opcode.size - 1;
+        translator->labels[curLabelInd].name = curLabelName;
+        translator->labels[curLabelInd].hash = hash(curLabelName, myStrLen(curLabelName));
+        curLabelInd++;
+        printf("\n");
+        return true;
+    }
+
+    return false;
+}
+
+static bool encodeCommand(translator_t* translator){
+    assert(translator);
+
+    unsigned long curCommandHash = hash(translator->curState.cmdName, myStrLen(translator->curState.cmdName));
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commands) / sizeof(command_t); curCommandInd++){
         ON_DEBUG(printf("Результат сравнения строк при помощи cmpHashSpuCom(): %d\n", curCommandHash == commands[curCommandInd].hash))
         
@@ -107,10 +122,10 @@ static bool encodeCommand(char* curCommand, translator_t* translator){
             ON_DEBUG(printf("Code to return: %d\n", commands[curCommandInd].code))
             
             printf("command name: %s, code: %d\n", commands[curCommandInd].name, commands[curCommandInd].code);
-            translator->opcode->ptr[translator->opcode->size] = commands[curCommandInd].code;
-            translator->curCmdParType = commands[curCommandInd].param;
+            translator->opcode.ptr[translator->opcode.size] = commands[curCommandInd].code;
+            translator->curState.par = commands[curCommandInd].param;
             
-            (translator->opcode->size)++;
+            (translator->opcode.size)++;
 
             return true;
         }
@@ -119,116 +134,91 @@ static bool encodeCommand(char* curCommand, translator_t* translator){
     return false;
 }
 
-static bool addCommandParameter(translator_t* translator, size_t curString){
+static bool addCommandParameter(translator_t* translator){
     assert(translator);
-    printf("translator->curCmdParType — %d\n", translator->curCmdParType);
-    switch(translator->curCmdParType){
-        case REG_PARAM:    addRegParameter(translator, curString);    break;
-        case LABEL_PARAM:  addLabelParameter(translator, curString);  break;
-        case NUMBER_PARAM: addNumberParameter(translator, curString); break;
+
+    printf("translator->curCmdParType — %d\n", translator->curState.par);
+    switch(translator->curState.par){
+        case REG_PARAM:    addRegParameter(translator);    break;
+        case LABEL_PARAM:  addLabelParameter(translator);  break;
+        case NUMBER_PARAM: addNumberParameter(translator); break;
         case NO_PARAM:     break;
         default: break;
     }
 
-    printf("MEOW\n");
     return true;
 }
 ///
-static bool addRegParameter(translator_t* translator, size_t curString){
+static bool addRegParameter(translator_t* translator){
     assert(translator);
 
-    printf("Номер команды: %d, парметр: %d\n", translator->opcode->ptr[translator->opcode->size - 1], translator->opcode->ptr[translator->opcode->size]);
-    if(translator->opcode->ptr[translator->opcode->size - 1] == RET){
-        printf("NICE\n");
-        translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
-        (translator->opcode->size)++;
+    if(translator->opcode.ptr[translator->opcode.size - 1] == RET){
+        translator->opcode.ptr[translator->opcode.size] = N_REGISTERS - 1;
+
+        (translator->opcode.size)++;
+
         return true;
     }
-    printf("Номер команды: %d, парметр: %d\n", translator->opcode->ptr[translator->opcode->size - 1], translator->opcode->ptr[translator->opcode->size]);
 
     char reg[REGISTER_NAME_MAX_SIZE];
-    sscanf(translator->input_buffer.ptr[curString].ptr, "%*s %s", reg);
+    sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s %sX\n", reg);
     if (reg[0] == 'R'){
-        translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
+        translator->opcode.ptr[translator->opcode.size] = N_REGISTERS - 1;
     }
     else{
-        translator->opcode->ptr[translator->opcode->size] = reg[0] - A_ASCII_CODE;
+        translator->opcode.ptr[translator->opcode.size] = reg[0] - UPPER_SYM_MIN;
     }
-    (translator->opcode->size)++;
+    (translator->opcode.size)++;
 
-    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
+    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode.ptr[translator->opcode.size]);)
 
     return true;
 }
 
-static bool addLabelParameter(translator_t* translator, size_t curString){
+static bool addNumberParameter(translator_t* translator){
+    assert(translator);
+
+    int numberParam = 0; 
+    sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s %d", &numberParam);
+
+    translator->opcode.ptr[translator->opcode.size] = numberParam;
+    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode.ptr[translator->opcode.size]);)
+
+    (translator->opcode.size)++;
+
+    return true;
+}
+
+static bool addLabelParameter(translator_t* translator){
     assert(translator);
     
-    int   labelPar     = 0;
-    char  labelParName[20];
+    int   cmdNumber     = 0;
+    char  labelParName[LABEL_NAME_MAX_SIZE];
 
-    if(sscanf(translator->input_buffer.ptr[curString].ptr, "%*s :%s", labelParName)){
-        printf("labelParName: %s\n", labelParName);
-        labelPar = getLabelPar(labelParName);
-        printf("labelPar: %d\n", labelPar);
+    if(sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s :%s", labelParName)){
+        translator->curState.labelName = labelParName;
+        cmdNumber = getCmdNumber(translator);
 
-        if(labelPar != LABEL_POISON){
-            translator->opcode->ptr[translator->opcode->size] = labelPar;
+        if(cmdNumber != LABEL_POISON){
+            translator->opcode.ptr[translator->opcode.size] = cmdNumber;
         } 
 
-        (translator->opcode->size)++;
+        (translator->opcode.size)++;
         return true;
     }
     else{
-        printf("PROBLEM\n");
         
         return false;
     }
 }
 
-static bool addNumberParameter(translator_t* translator, size_t curString){
+static int getCmdNumber(translator_t* translator){
     assert(translator);
 
-    int pushParameter = 0; // 
-    sscanf(translator->input_buffer.ptr[curString].ptr, "%*s %d", &pushParameter);
-
-    translator->opcode->ptr[translator->opcode->size] = pushParameter;
-    ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
-
-    (translator->opcode->size)++;
-
-    return true;
-}
-
-static bool getLabel(translator_t* translator, size_t curString){
-    assert(translator);
-
-    static size_t curLabelInd = 0;
-
-    char curLabelName[20]; // 20
-    if(sscanf(translator->input_buffer.ptr[curString].ptr, ":%s", curLabelName)){
-        printf("Замена\n");
-        printf("curByteBufferSize: %d\n", (int)translator->opcode->size);
-        printNameTable();
-        nameLabels[curLabelInd].code = (int) translator->opcode->size - 1;
-        nameLabels[curLabelInd].name = curLabelName;
-        nameLabels[curLabelInd].hash = hash(curLabelName, myStrLen(curLabelName, '\0'));
-        curLabelInd++;
-        printf("\n");
-        printNameTable();
-        return true;
-    }
-
-    return false;
-}
-
-static int getLabelPar(char* curLabel){
-    assert(curLabel);
-
-    unsigned long curLabelHash = hash(curLabel, myStrLen(curLabel, '\0'));
+    unsigned long curLabelHash = hash(translator->curState.labelName, myStrLen(translator->curState.labelName));
     for(size_t curLabelInd = 0; curLabelInd < N_LABELS; curLabelInd++){
-        if(curLabelHash == nameLabels[curLabelInd].hash){
-            return nameLabels[curLabelInd].code;
+        if(curLabelHash == translator->labels[curLabelInd].hash){
+            return translator->labels[curLabelInd].addr;
         }
     }
 
@@ -236,8 +226,8 @@ static int getLabelPar(char* curLabel){
 }
 
 static void setSpuCommandsHash(){
-    for(size_t curCommand = 0; curCommand < sizeof(commands) / sizeof(command_t); curCommand++){
-        commands[curCommand].hash = hash(commands[curCommand].name, myStrLen(commands[curCommand].name, '\0'));
+    for(size_t curCmdName = 0; curCmdName < sizeof(commands) / sizeof(command_t); curCmdName++){
+        commands[curCmdName].hash = hash(commands[curCmdName].name, myStrLen(commands[curCmdName].name));
     }
 }
 
@@ -245,7 +235,7 @@ static void poisonLabels(label_t* labels){
     assert(labels);
 
     for(size_t curLabel = 0; curLabel < N_LABELS; curLabel++){
-        labels[curLabel].code = LABEL_POISON;
+        labels[curLabel].addr = LABEL_POISON;
         labels[curLabel].hash = 0;
     }
 }
@@ -258,11 +248,10 @@ void printByteCodeBuffer(int* buffer, size_t curByteBufferSize){
         printf("%ld) элемент буфера: %d\n", curBufferElemInd + 1, buffer[curBufferElemInd]);
     }
 }
-
 #endif /* DEBUG */
 
-static void printNameTable(){
-    for(size_t curNameInd = 0; curNameInd < N_LABELS; curNameInd++){
-        printf("%lu метка — код: %d, hash: %lu\n", curNameInd, nameLabels[curNameInd].code, nameLabels[curNameInd].hash);
-    }
-}
+// static void printNameTable(){
+//     for(size_t curNameInd = 0; curNameInd < N_LABELS; curNameInd++){
+//         printf("%lu метка — код: %d, hash: %lu\n", curNameInd, nameLabels[curNameInd].addr, nameLabels[curNameInd].hash);
+//     }
+// }
