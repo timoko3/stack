@@ -5,9 +5,10 @@
 
 #include <math.h>
 
-static bool spuCommand    (processor* spu, command cmd);
+static bool spuCommand  (processor* spu, command cmd);
+static bool jmpCond     (processor* spu, command cmd);
+static bool calcCommand (processor* spu, command cmd);
 
-static bool calcCommand   (processor* spu, command cmd);
 static bool unaryCalcCommand  (processor* spu, handlers handler);
 static bool binaryCalcCommand (processor* spu, handlers handler);
 
@@ -16,40 +17,6 @@ static void simplePrintStack(stack* stk);
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
 
-typedef bool (*comparatorPtr) (cmdParam_t comparedNum1, cmdParam_t comparedNum2, cmdParam_t* result);
-
-struct conditionalJump{
-    cmdOpcodes code;
-    comparatorPtr comparator;
-};
-
-conditionalJump conditionalJumps[]{
-    {JB,  lt},
-    {JBE, le},
-    {JA,  gt},
-    {JAE, ge},
-    {JE,  eq},
-    {JNE, ne}
-};
-
-// bool getOpcodeBuffer(processor* spu, const char* fileName){
-//     assert(spu);
-//     assert(fileName);
-
-//     spu->opcode.size = getFileSize(fileName) / sizeof(int);
-//     spu->opcode.ptr = (int*) calloc(spu->opcode.size, sizeof(int));
-//     assert(spu->opcode.ptr);
-
-//     fileDescription byteCodeFileDes = {
-//         fileName,
-//         "rb"
-//     };
-//     getIntNumsToBuffer(byteCodeFileDes, spu->opcode.size * sizeof(int), &spu->opcode.ptr);
-
-//     return true;
-// }
-
-
 processorStatus processorCtor(processor* spu){
     assert(spu);
     
@@ -57,6 +24,19 @@ processorStatus processorCtor(processor* spu){
     stackCtor(&spu->funcRetAddr, 10);
     spu->pc = 0;
     
+    return SPU_PROCESS_OK;
+}
+
+processorStatus processorDtor(processor* spu){
+    assert(spu);
+
+    stackDtor(&spu->stk);
+    stackDtor(&spu->funcRetAddr);
+
+    poisonMemory(spu->regs, sizeof(spu->regs));
+    
+    poisonMemory(&spu->pc, sizeof(spu->pc));
+
     return SPU_PROCESS_OK;
 }
 
@@ -89,6 +69,7 @@ bool executeCommand(processor* spu){
             command curCmd = commandsHandler[curCommandInd];
             switch(curCmd.type){
                 case PROCESSOR: if(spuCommand(spu, curCmd) == false)  return false; break;
+                case JUMP:      if(jmpCond(spu, curCmd) == false) return false; break;
                 case CALC:      if(calcCommand(spu, curCmd) == false) return false; break;
                 default: break;
             }
@@ -101,19 +82,6 @@ bool executeCommand(processor* spu){
     return true;
 }
 
-processorStatus processorDtor(processor* spu){
-    assert(spu);
-
-    stackDtor(&spu->stk);
-    stackDtor(&spu->funcRetAddr);
-
-    poisonMemory(spu->regs, sizeof(spu->regs));
-    
-    poisonMemory(&spu->pc, sizeof(spu->pc));
-
-    return SPU_PROCESS_OK;
-}
-
 static bool spuCommand(processor* spu, command cmd){
     assert(spu);
 
@@ -121,6 +89,28 @@ static bool spuCommand(processor* spu, command cmd){
 
     return check;
 } 
+
+static bool jmpCond(processor* spu, command cmd){
+    assert(spu);
+
+    stackData_t superiorStackElem = 0;
+    stackData_t preSuperiorStackElem = 0;
+
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);  
+    
+    cmdParam_t result = 0;
+    cmd.handler.calcBinaryHandler(superiorStackElem, preSuperiorStackElem, &result);
+
+    if(result){
+        jmp(spu);
+    }
+    else{
+        (spu->pc)++;
+    }
+
+    return true;
+}
 
 static bool calcCommand(processor* spu, command cmd){
     assert(spu);
@@ -230,32 +220,6 @@ bool jmp(processor* spu){
     assert(spu);
 
     spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
-
-    return true;
-}
-
-bool jmpCond(processor* spu){
-    assert(spu);
-
-    stackData_t superiorStackElem = 0;
-    stackData_t preSuperiorStackElem = 0;
-
-    stackPop(&spu->stk, &superiorStackElem);
-    stackPop(&spu->stk, &preSuperiorStackElem);    
-
-    for(size_t curJumpInd = 0; curJumpInd < sizeof(conditionalJumps) / sizeof(conditionalJump); curJumpInd++){
-        if(spu->opcode.ptr[spu->pc] == conditionalJumps[curJumpInd].code){
-            cmdParam_t result = 0;
-            conditionalJumps->comparator(superiorStackElem, preSuperiorStackElem, &result);
-
-            if(result){
-                jmp(spu);
-            }
-            else{
-                (spu->pc)++;
-            }
-        }   
-    }
 
     return true;
 }

@@ -7,6 +7,29 @@
 
 #define DEBUG_TRANSLATOR 0
 
+const int    ASSEMBLE_FAILURE       = -1;
+
+const size_t COMMAND_NAME_MAX_SIZE  = 10;
+const size_t REGISTER_NAME_MAX_SIZE = 5;
+const size_t LABEL_NAME_MAX_SIZE    = 20;
+
+const size_t N_LABELS     = 10;
+const int    LABEL_POISON = 46878756;
+
+typedef int value;
+struct label_t{
+    const char* name;
+    unsigned long hash;
+    value addr;
+};
+
+struct state_t{
+    param_t par;
+    size_t  StringInd;
+    char*   cmdName;
+    char*   labelName;
+};
+
 struct translator_t{ 
     command_t* cmds; 
     strings_t  input_buffer; 

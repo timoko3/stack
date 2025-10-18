@@ -19,10 +19,9 @@ enum processorStatus{
 };
 
 processorStatus processorCtor(processor* spu);
+processorStatus processorDtor(processor* spu);
 bool loadOpcode(processor* spu, buffer_t opcode);
-// bool getOpcodeBuffer(processor* spu, const char* fileName);
 bool runProcessor(processor* spu);
 bool executeCommand(processor* spu);
-processorStatus processorDtor(processor* spu);
 
 #endif /* PROCESSOR_H */

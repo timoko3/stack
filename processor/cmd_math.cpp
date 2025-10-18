@@ -5,19 +5,16 @@
 
 bool add(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = param1 + param2;
-
     return true;
 }
 
 bool sub(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){   
     *result = param1 - param2;
-
     return true;
 }
 
 bool mul(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){  
     *result = param1 * param2;
-
     return true;
 }
 
@@ -45,61 +42,31 @@ bool sqrt(cmdParam_t param, cmdParam_t* result){
 
 
 bool lt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 < param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 < param2);
+    return true;
 }
 
 bool le(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 <= param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 <= param2);
+    return true;
 }
 
 bool gt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 > param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 > param2);
+    return true;
 }
 
 bool ge(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 >= param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 >= param2);
+    return true;
 }
 
 bool eq(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 == param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 == param2);
+    return true;
 }
 
 bool ne(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
-    if(param1 != param2){
-        *result = 1;
-        return true;
-    }
-
-    *result = 0;
-    return false;
+    *result = (param1 != param2);
+    return true;
 }
