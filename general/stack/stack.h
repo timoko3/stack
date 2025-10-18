@@ -10,7 +10,7 @@
 #include "genConsoleColors/consoleColors.h"
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 2
+#define DEBUG_LEVEL 0
 #endif /* DEBUG_LEVEL */
 
 #if DEBUG_LEVEL == 0

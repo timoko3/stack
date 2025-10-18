@@ -35,20 +35,20 @@ int main(void){
     #ifdef BUFFER_FROM_FILE
     free(translator.opcode->ptr);
     #endif /* BUFFER_FROM_FILE */
-
+    
     translatorDtor(&translator);
 
     #ifdef BUFFER_FROM_FILE
     getOpcodeBuffer(&spu1, outputByteCodeFileName); ///  
     #endif /* BUFFER_FROM_FILE */  
 
-    stackPush(&spu1.stk, 5);
-    stackPush(&spu1.stk, 7);
-    stackPush(&spu1.stk, 3);
+    // stackPush(&spu1.stk, 5);
+    // stackPush(&spu1.stk, 7);
+    // stackPush(&spu1.stk, 3);
 
     runProcessor(&spu1);
     
-    stackDump(&spu1.stk, __FUNCTION__, __FILE__, __LINE__);
+    // stackDump(&spu1.stk, __FUNCTION__, __FILE__, __LINE__);
 
     free(buf.buffer); // 
     free(buf.strings); // 

@@ -5,8 +5,13 @@
 
 #include <math.h>
 
-static bool unaryCommand(processor* spu, unaryCommandPtr handler);
-static bool binaryCommand(processor* spu, binaryCommandPtr handler);
+// static bool unaryCommand  (processor* spu, handlers handler);
+// static bool binaryCommand (processor* spu, handlers handler);
+// static bool noParamCommand(processor* spu, handlers handler);
+
+static bool spuCommand (processor* spu, command cmd);
+// static bool calcCommand(processor* spu, command cmd);
+
 
 static void processorDump(processor* spu);
 static void simplePrintStack(stack* stk);
@@ -14,12 +19,9 @@ static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
 
 // static bool sqrt(processor* spu);
-// static bool out(processor* spu);
 // static bool hlt(processor* spu);
 // static bool jmp(processor* spu);
 // static bool jmpCond(processor* spu);
-// static bool push(processor* spu);
-// static bool pushreg(processor* spu);
 // static bool popreg(processor* spu);
 // static bool callFunc(processor* spu);
 // static bool returnFunc(processor* spu);
@@ -79,8 +81,8 @@ bool executeCommand(processor* spu){
         if(commandsHandler[curCommandInd].code == spu->opcode.ptr[spu->pc]){
             command curCmd = commandsHandler[curCommandInd];
             switch(curCmd.type){
-                case BINARY:   binaryCommand(spu, curCmd.handler.binaryHandler); break;
-                case UNARY:    unaryCommand(spu,  curCmd.handler.unaryHandler); break;
+                case PROCESSOR: spuCommand    (spu, curCmd); break;
+                // case CALC:      calcCommand   (spu, curCmd); break;
                 default: break;
             }
             
@@ -113,55 +115,110 @@ processorStatus processorDtor(processor* spu){
     return SPU_PROCESS_OK;
 }
 
-static bool unaryCommand(processor* spu, unaryCommandPtr handler){
+static bool spuCommand(processor* spu, command cmd){
     assert(spu);
-    
-    stackData_t param = 0;
-    
-    stackPop(&spu->stk, &param);
 
-    stackData_t result = 0;
-    bool check = handler(param, &result);
-
-    stackPush(&spu->stk, result);
+    bool check = cmd.handler.spuHandler(spu);
 
     return check;
-}   
+} 
 
-static bool binaryCommand(processor* spu, binaryCommandPtr handler){
-    assert(spu);
-    
-    stackData_t param1 = 0;
-    stackData_t param2 = 0;
-    
-    stackPop(&spu->stk, &param2);
-    stackPop(&spu->stk, &param1);
-
-    stackData_t result = 0;
-    bool check = handler(param1, param2, &result);
-
-    stackPush(&spu->stk, result);
-
-    return check;
-}   
-
-// static bool out(processor* spu){
+// static bool spuCommand(processor* spu, command cmd){
 //     assert(spu);
 
-//     printf("Все элементы стека:\n");
-
-//     stackData_t curElem = 0;
-//     while(stackPop(&spu->stk, &curElem) != EMPTY_STACK){
-//         if(spu->stk.error.type != PROCESS_OK){
-//             break;
-//         }
-
-//         printf("%d ", curElem);
+//     switch(cmd.param){
+//         case UNARY: bool check = cmd.handler(spu);
+//         case BINARY: 
 //     }
-//     printf("\n");
 
-//     return true;
+    
+
+//     return check;
 // }
+
+// static bool unaryCommand(processor* spu, command cmd){
+//     assert(spu);
+    
+//     stackData_t param = 0;
+    
+//     stackPop(&spu->stk, &param);
+
+//     stackData_t result = 0;
+//     bool check = handler(param, &result);
+
+//     stackPush(&spu->stk, result);
+
+//     return check;
+// }   
+
+// static bool binaryCommand(processor* spu, binaryCommandPtr handler){
+//     assert(spu);
+    
+//     stackData_t param1 = 0;
+//     stackData_t param2 = 0;
+    
+//     stackPop(&spu->stk, &param2);
+//     stackPop(&spu->stk, &param1);
+
+//     stackData_t result = 0;
+//     bool check = handler(param1, param2, &result);
+
+//     stackPush(&spu->stk, result);
+
+//     return check;
+// }   
+
+bool push(processor* spu){
+    assert(spu);
+
+    stackData_t pushParameter = spu->opcode.ptr[spu->pc + 1];
+    stackPush(&(spu->stk), pushParameter); 
+    spu->pc++;
+
+    processorDump(spu);
+
+    return true;
+}
+
+bool pushreg(processor* spu){
+    assert(spu);
+
+    int curReg = spu->regs[spu->opcode.ptr[spu->pc + 1]];
+    printf("curReg : %d\n", curReg);
+    stackPush(&spu->stk, curReg);
+
+    (spu->pc)++;
+
+    return true; 
+}
+
+bool popreg(processor* spu){
+    assert(spu);
+
+    stackPop(&spu->stk, &(spu->regs[spu->opcode.ptr[spu->pc + 1]]));
+
+    (spu->pc)++;
+
+    return true; 
+}
+
+bool out(processor* spu){
+    assert(spu);
+
+    printf("Все элементы стека:\n");
+
+    stackData_t curElem = 0;
+    while(stackPop(&spu->stk, &curElem) != EMPTY_STACK){
+        if(spu->stk.error.type != PROCESS_OK){
+            break;
+        }
+
+        printf("%d ", curElem);
+    }
+    printf("\n");
+
+    return true;
+}
 
 // static bool hlt(processor* spu){
 //     assert(spu);
@@ -231,39 +288,6 @@ static bool binaryCommand(processor* spu, binaryCommandPtr handler){
 //     return true;
 // }
 
-// static bool push(processor* spu){
-//     assert(spu);
-
-//     stackData_t pushParameter = spu->opcode.ptr[spu->pc + 1];
-//     stackPush(&(spu->stk), pushParameter); 
-//     spu->pc++;
-
-//     processorDump(spu);
-
-//     return true;
-// }
-
-// static bool pushreg(processor* spu){
-//     assert(spu);
-
-//     int curReg = spu->regs[spu->opcode.ptr[spu->pc + 1]];
-//     printf("curReg : %d\n", curReg);
-//     stackPush(&spu->stk, curReg);
-
-//     (spu->pc)++;
-
-//     return true; 
-// }
-
-// static bool popreg(processor* spu){
-//     assert(spu);
-
-//     stackPop(&spu->stk, &(spu->regs[spu->opcode.ptr[spu->pc + 1]]));
-
-//     (spu->pc)++;
-
-//     return true; 
-// }
 
 static void processorDump(processor* spu){
     assert(spu);

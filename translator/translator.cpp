@@ -84,6 +84,8 @@ static bool fillOpcodeBuffer(translator_t* translator){
         sscanf(translator->input_buffer.ptr[curString].ptr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         if(!encodeCommand(curCommand, translator)) break; 
+
+        printf("%d\n", translator->opcode->ptr[curString]);
         
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size - 1]))
         
@@ -142,6 +144,7 @@ static bool addRegParameter(translator_t* translator, size_t curString){
     else{
         translator->opcode->ptr[translator->opcode->size] = reg[0] - A_ASCII_CODE;
     }
+    (translator->opcode->size)++;
 
     ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
 
@@ -181,6 +184,8 @@ static bool addNumberParameter(translator_t* translator, size_t curString){
 
     translator->opcode->ptr[translator->opcode->size] = pushParameter;
     ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size]);)
+
+    (translator->opcode->size)++;
 
     return true;
 }

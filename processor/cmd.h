@@ -2,50 +2,49 @@
 #define PROCESSOR_CMD_H
 
 #include "cmdOpcodes.h"
+#include "cmd_spu.h"
 
 typedef int cmdParam_t;
 
 enum commandType{
-    // NO_PARAM,
-    UNARY,
-    BINARY,
-    NUMBER
+    CALC,
+    PROCESSOR
 };
-typedef bool (*noParamCommandPtr)(cmdParam_t* result);
+
+enum commandParamType{
+    NO_CMD_PARAM,
+    UNARY,
+    BINARY
+};
+
 typedef bool (*unaryCommandPtr)  (cmdParam_t param, cmdParam_t* result);
 typedef bool (*binaryCommandPtr) (cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+typedef bool (*spuNoParamPtr)    (processor* spu);
 
 union handlers{
-    unaryCommandPtr   unaryHandler;
-    binaryCommandPtr  binaryHandler;
-    noParamCommandPtr noParamHandler;
+    spuNoParamPtr    spuHandler;
+    unaryCommandPtr  calcUnaryHandler;
+    binaryCommandPtr calcBinaryHandler;
 };
 
 struct command{
-    handlers         handler;
     cmdOpcodes       code; 
+    handlers         handler;
     commandType      type;
+    commandParamType param;  
+    // math
+    // jmp
+    // spu specifical
 };
 
-bool add(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool sub(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool mul(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool sqrt(cmdParam_t param,  cmdParam_t* result);
-
 const command commandsHandler[]{ 
-    {.handler = {.binaryHandler = add}, ADD, BINARY},
-    {.handler = {.binaryHandler = sub}, SUB, BINARY},
-    {.handler = {.binaryHandler = mul}, MUL, BINARY},
-    {.handler = {.binaryHandler = div}, DIV, BINARY},
-    {.handler = {.unaryHandler = sqrt}, SQRT, UNARY},
-    
-    // {OUT,     out},
-    // {HLT,     hlt},
-    // {RET,     returnFunc},
-    // {CALL,    callFunc},
+    {PUSH, {.spuHandler = push}, PROCESSOR, NO_CMD_PARAM},
 
-    // {PUSH,    push},
+    {OUT,  {.spuHandler = out}, PROCESSOR, NO_CMD_PARAM}
+    // {PUSHREG, {.spuHandler = pushreg}, PROCESSOR, NO_CMD_PARAM},
+    // {POPREG,  {.spuHandler = popreg}, PROCESSOR, NO_CMD_PARAM},
+    // {HLT,     hlt},
+
 
     // {JMP,     jmpCond},
     // {JB,      jmpCond}, // jmpJB
@@ -55,10 +54,10 @@ const command commandsHandler[]{
     // {JE,      jmpCond},
     // {JNE,     jmpCond},
 
-    // {PUSHREG, pushreg},
-    // {POPREG,  popreg},
+    // math
 
-
+    // {RET,     returnFunc},
+    // {CALL,    callFunc},
 
 }; 
 
