@@ -3,6 +3,7 @@
 
 #include "cmdOpcodes.h"
 #include "cmd_spu.h"
+#include "cmd_math.h"
 
 typedef int cmdParam_t;
 
@@ -32,32 +33,31 @@ struct command{
     handlers         handler;
     commandType      type;
     commandParamType param;  
-    // math
-    // jmp
-    // spu specifical
 };
 
 const command commandsHandler[]{ 
-    {PUSH, {.spuHandler = push}, PROCESSOR, NO_CMD_PARAM},
+    {PUSH,    {.spuHandler = push},       PROCESSOR, NO_CMD_PARAM},
+    {PUSHREG, {.spuHandler = pushreg},    PROCESSOR, NO_CMD_PARAM},
+    {POPREG,  {.spuHandler = popreg},     PROCESSOR, NO_CMD_PARAM},
+    {OUT,     {.spuHandler = out},        PROCESSOR, NO_CMD_PARAM},
+    {HLT,     {.spuHandler = hlt},        PROCESSOR, NO_CMD_PARAM},
+    {JMP,     {.spuHandler = jmp},        PROCESSOR, NO_CMD_PARAM},
 
-    {OUT,  {.spuHandler = out}, PROCESSOR, NO_CMD_PARAM}
-    // {PUSHREG, {.spuHandler = pushreg}, PROCESSOR, NO_CMD_PARAM},
-    // {POPREG,  {.spuHandler = popreg}, PROCESSOR, NO_CMD_PARAM},
-    // {HLT,     hlt},
+    {JB,      {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM}, 
+    {JBE,     {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM},
+    {JA,      {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM},
+    {JAE,     {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM},
+    {JE,      {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM},
+    {JNE,     {.spuHandler =jmpCond},     PROCESSOR, NO_CMD_PARAM},
 
+    {CALL,    {.spuHandler = callFunc},   PROCESSOR, NO_CMD_PARAM},
+    {RET,     {.spuHandler = returnFunc}, PROCESSOR, NO_CMD_PARAM},
 
-    // {JMP,     jmpCond},
-    // {JB,      jmpCond}, // jmpJB
-    // {JBE,     jmpCond},
-    // {JA,      jmpCond},
-    // {JAE,     jmpCond},
-    // {JE,      jmpCond},
-    // {JNE,     jmpCond},
-
-    // math
-
-    // {RET,     returnFunc},
-    // {CALL,    callFunc},
+    {ADD,  {.calcBinaryHandler = add},  CALC, BINARY},
+    {SUB,  {.calcBinaryHandler = sub},  CALC, BINARY},
+    {MUL,  {.calcBinaryHandler = mul},  CALC, BINARY},
+    {DIV,  {.calcBinaryHandler = div},  CALC, BINARY},
+    {SQRT, {.calcUnaryHandler  = sqrt}, CALC, UNARY}
 
 }; 
 

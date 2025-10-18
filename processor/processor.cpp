@@ -5,26 +5,16 @@
 
 #include <math.h>
 
-// static bool unaryCommand  (processor* spu, handlers handler);
-// static bool binaryCommand (processor* spu, handlers handler);
-// static bool noParamCommand(processor* spu, handlers handler);
-
 static bool spuCommand (processor* spu, command cmd);
-// static bool calcCommand(processor* spu, command cmd);
+static bool calcCommand(processor* spu, command cmd);
 
+static bool unaryCommand  (processor* spu, handlers handler);
+static bool binaryCommand (processor* spu, handlers handler);
 
 static void processorDump(processor* spu);
 static void simplePrintStack(stack* stk);
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
-
-// static bool sqrt(processor* spu);
-// static bool hlt(processor* spu);
-// static bool jmp(processor* spu);
-// static bool jmpCond(processor* spu);
-// static bool popreg(processor* spu);
-// static bool callFunc(processor* spu);
-// static bool returnFunc(processor* spu);
 
 // bool JBcmp(int arg1, int arg2) { return arg1 <  arg2; }
 // bool JBcmp(int arg1, int arg2) { return arg1 <= arg2; }
@@ -33,6 +23,22 @@ static void printRegs(int* regs);
 // bool JBcmp(int arg1, int arg2) { return arg1 == arg2; }
 // bool JBcmp(int arg1, int arg2) { return arg1 != arg2; }
 // jmpJB(...){ jmpCond (JBcond); }
+
+typedef bool (*comparatorPtr) (cmdParam_t comparedNum1, cmdParam_t comparedNum2, cmdParam_t* result);
+
+struct conditionalJump{
+    cmdOpcodes code;
+    comparatorPtr comparator;
+};
+
+conditionalJump conditionalJumps[]{
+    {JB,  lt},
+    {JBE, le},
+    {JA,  gt},
+    {JAE, ge},
+    {JE,  eq},
+    {JNE, ne}
+};
 
 bool getOpcodeBuffer(processor* spu, const char* fileName){
     assert(spu);
@@ -81,8 +87,8 @@ bool executeCommand(processor* spu){
         if(commandsHandler[curCommandInd].code == spu->opcode.ptr[spu->pc]){
             command curCmd = commandsHandler[curCommandInd];
             switch(curCmd.type){
-                case PROCESSOR: spuCommand    (spu, curCmd); break;
-                // case CALC:      calcCommand   (spu, curCmd); break;
+                case PROCESSOR: if(spuCommand(spu, curCmd) == false)  return false; break;
+                case CALC:      if(calcCommand(spu, curCmd) == false) return false; break;
                 default: break;
             }
             
@@ -123,50 +129,51 @@ static bool spuCommand(processor* spu, command cmd){
     return check;
 } 
 
-// static bool spuCommand(processor* spu, command cmd){
-//     assert(spu);
+static bool calcCommand(processor* spu, command cmd){
+    assert(spu);
 
-//     switch(cmd.param){
-//         case UNARY: bool check = cmd.handler(spu);
-//         case BINARY: 
-//     }
+    bool check = true;
+    switch(cmd.param){
+        case UNARY:  check = unaryCommand(spu,  cmd.handler); break;
+        case BINARY: check = binaryCommand(spu, cmd.handler); break;
+        case NO_CMD_PARAM: break;
+        default: break;
+    }
 
+    return check;
+}
+
+static bool unaryCommand(processor* spu, handlers handler){
+    assert(spu);
     
-
-//     return check;
-// }
-
-// static bool unaryCommand(processor* spu, command cmd){
-//     assert(spu);
+    stackData_t param = 0;
     
-//     stackData_t param = 0;
+    stackPop(&spu->stk, &param);
+
+    stackData_t result = 0;
+    bool check = handler.calcUnaryHandler(param, &result);
+
+    stackPush(&spu->stk, result);
+
+    return check;
+}   
+
+static bool binaryCommand(processor* spu, handlers handler){
+    assert(spu);
     
-//     stackPop(&spu->stk, &param);
-
-//     stackData_t result = 0;
-//     bool check = handler(param, &result);
-
-//     stackPush(&spu->stk, result);
-
-//     return check;
-// }   
-
-// static bool binaryCommand(processor* spu, binaryCommandPtr handler){
-//     assert(spu);
+    stackData_t param1 = 0;
+    stackData_t param2 = 0;
     
-//     stackData_t param1 = 0;
-//     stackData_t param2 = 0;
-    
-//     stackPop(&spu->stk, &param2);
-//     stackPop(&spu->stk, &param1);
+    stackPop(&spu->stk, &param2);
+    stackPop(&spu->stk, &param1);
 
-//     stackData_t result = 0;
-//     bool check = handler(param1, param2, &result);
+    stackData_t result = 0;
+    bool check = handler.calcBinaryHandler(param1, param2, &result);
 
-//     stackPush(&spu->stk, result);
+    stackPush(&spu->stk, result);
 
-//     return check;
-// }   
+    return check;
+}   
 
 bool push(processor* spu){
     assert(spu);
@@ -220,74 +227,66 @@ bool out(processor* spu){
     return true;
 }
 
-// static bool hlt(processor* spu){
-//     assert(spu);
+bool hlt(processor* spu){
+    assert(spu);
 
-//     return false;
-// }
+    return false;
+}
 
-// static bool jmp(processor* spu){
-//     assert(spu);
+bool jmp(processor* spu){
+    assert(spu);
 
-//     spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
+    spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
 
-//     return true;
-// }
+    return true;
+}
 
-// static bool jmpCond(processor* spu){
-//     assert(spu);
+bool jmpCond(processor* spu){
+    assert(spu);
 
-//     stackData_t superiorStackElem = 0;
-//     stackData_t preSuperiorStackElem = 0;
+    stackData_t superiorStackElem = 0;
+    stackData_t preSuperiorStackElem = 0;
 
-//     stackPop(&spu->stk, &superiorStackElem);
-//     stackPop(&spu->stk, &preSuperiorStackElem);    
+    stackPop(&spu->stk, &superiorStackElem);
+    stackPop(&spu->stk, &preSuperiorStackElem);    
 
-//     int jumpSign = spu->opcode.ptr[spu->pc];
+    for(size_t curJumpInd = 0; curJumpInd < sizeof(conditionalJumps) / sizeof(conditionalJump); curJumpInd++){
+        if(spu->opcode.ptr[spu->pc] == conditionalJumps[curJumpInd].code){
+            cmdParam_t result = 0;
+            conditionalJumps->comparator(superiorStackElem, preSuperiorStackElem, &result);
 
-//     bool doJump = false;
-//     switch(jumpSign){
-//         // case JB : doJump = JBcond(arg1, arg2);  break;
-//         case JB : if(superiorStackElem <  preSuperiorStackElem) doJump = true;  break;  
-//         case JBE: if(superiorStackElem <= preSuperiorStackElem) doJump = true;  break;  
-//         case JA : if(superiorStackElem >  preSuperiorStackElem) doJump = true;  break;
-//         case JAE: if(superiorStackElem >= preSuperiorStackElem) doJump = true;  break; 
-//         case JE : if(superiorStackElem == preSuperiorStackElem) doJump = true;  break; 
-//         case JNE: if(superiorStackElem != preSuperiorStackElem) doJump = true;  break; 
-//         default : doJump = false;
-//     }
+            if(result){
+                jmp(spu);
+            }
+            else{
+                (spu->pc)++;
+            }
+        }   
+    }
+
+    return true;
+}
+
+bool callFunc(processor* spu){
+    assert(spu);
+
+    stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 1);
+    jmp(spu);
     
-//     if(doJump){
-//         spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
-//     }
-//     else{
-//         (spu->pc)++;
-//     }
+    return true;
+}
 
-//     return true;
-// }
+bool returnFunc(processor* spu){
+    assert(spu);
 
-// static bool callFunc(processor* spu){
-//     assert(spu);
+    popreg(spu);
 
-//     stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 1);
-//     spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
-    
-//     return true;
-// }
+    stackData_t retAddr = 0;
+    stackPop(&(spu->funcRetAddr), &retAddr);
+    spu->pc = (size_t) retAddr;
 
-// static bool returnFunc(processor* spu){
-//     assert(spu);
-
-//     popreg(spu);
-
-//     stackData_t retAddr = 0;
-//     stackPop(&(spu->funcRetAddr), &retAddr);
-//     spu->pc = (size_t) retAddr;
-
-//     return true;
-// }
-
+    return true;
+}
 
 static void processorDump(processor* spu){
     assert(spu);

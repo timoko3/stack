@@ -76,7 +76,7 @@ bool translatorDtor(translator_t* translator){
 static bool fillOpcodeBuffer(translator_t* translator){
     assert(translator);
 
-    for(size_t curString = 0; curString < translator->input_buffer.count; curString++){
+    for(size_t curString = 0; curString < translator->input_buffer.count - 1; curString++){
         char curCommand[COMMAND_NAME_MAX_SIZE] = {0};
 
         if(getLabel(translator, curString)) continue;
@@ -84,16 +84,15 @@ static bool fillOpcodeBuffer(translator_t* translator){
         sscanf(translator->input_buffer.ptr[curString].ptr, "%s", curCommand);
         ON_DEBUG(printf("curCommand: %s\n", curCommand))
         if(!encodeCommand(curCommand, translator)) break; 
-
-        printf("%d\n", translator->opcode->ptr[curString]);
         
         ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode->ptr[translator->opcode->size - 1]))
         
         addCommandParameter(translator, curString);
-
+        printf("curString: %lu\n", curString);
+        printf("curString: %lu\n", translator->input_buffer.count);
         ON_DEBUG(printf("\n"))
     }
-
+    printf("FILLED\n");
     return true;
 }
 
@@ -107,6 +106,7 @@ static bool encodeCommand(char* curCommand, translator_t* translator){
         if(curCommandHash == commands[curCommandInd].hash){
             ON_DEBUG(printf("Code to return: %d\n", commands[curCommandInd].code))
             
+            printf("command name: %s, code: %d\n", commands[curCommandInd].name, commands[curCommandInd].code);
             translator->opcode->ptr[translator->opcode->size] = commands[curCommandInd].code;
             translator->curCmdParType = commands[curCommandInd].param;
             
@@ -121,7 +121,7 @@ static bool encodeCommand(char* curCommand, translator_t* translator){
 
 static bool addCommandParameter(translator_t* translator, size_t curString){
     assert(translator);
-
+    printf("translator->curCmdParType — %d\n", translator->curCmdParType);
     switch(translator->curCmdParType){
         case REG_PARAM:    addRegParameter(translator, curString);    break;
         case LABEL_PARAM:  addLabelParameter(translator, curString);  break;
@@ -130,11 +130,21 @@ static bool addCommandParameter(translator_t* translator, size_t curString){
         default: break;
     }
 
+    printf("MEOW\n");
     return true;
 }
 ///
 static bool addRegParameter(translator_t* translator, size_t curString){
     assert(translator);
+
+    printf("Номер команды: %d, парметр: %d\n", translator->opcode->ptr[translator->opcode->size - 1], translator->opcode->ptr[translator->opcode->size]);
+    if(translator->opcode->ptr[translator->opcode->size - 1] == RET){
+        printf("NICE\n");
+        translator->opcode->ptr[translator->opcode->size] = N_REGISTERS - 1;
+        (translator->opcode->size)++;
+        return true;
+    }
+    printf("Номер команды: %d, парметр: %d\n", translator->opcode->ptr[translator->opcode->size - 1], translator->opcode->ptr[translator->opcode->size]);
 
     char reg[REGISTER_NAME_MAX_SIZE];
     sscanf(translator->input_buffer.ptr[curString].ptr, "%*s %s", reg);
@@ -153,7 +163,7 @@ static bool addRegParameter(translator_t* translator, size_t curString){
 
 static bool addLabelParameter(translator_t* translator, size_t curString){
     assert(translator);
-
+    
     int   labelPar     = 0;
     char  labelParName[20];
 

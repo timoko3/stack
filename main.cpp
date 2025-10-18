@@ -7,7 +7,7 @@
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
 
-const char* textCommandsFileName   = "test.txt"; 
+const char* textCommandsFileName   = "factorial.txt"; 
 const char* outputByteCodeFileName = "factorial.asm";
 
 // #define BUFFER_FROM_FILE
@@ -28,6 +28,7 @@ int main(void){
 
     processor spu1; 
     processorCtor(&spu1);
+    printf("Номер команды: %d, парметр: %d\n", translator.opcode->ptr[translator.opcode->size - 2], translator.opcode->ptr[translator.opcode->size - 1]);
     #ifndef BUFFER_FROM_FILE
     spu1.opcode.ptr = translator.opcode->ptr;
     spu1.opcode.size = translator.opcode->size;
@@ -35,16 +36,12 @@ int main(void){
     #ifdef BUFFER_FROM_FILE
     free(translator.opcode->ptr);
     #endif /* BUFFER_FROM_FILE */
-    
+
     translatorDtor(&translator);
 
     #ifdef BUFFER_FROM_FILE
     getOpcodeBuffer(&spu1, outputByteCodeFileName); ///  
     #endif /* BUFFER_FROM_FILE */  
-
-    // stackPush(&spu1.stk, 5);
-    // stackPush(&spu1.stk, 7);
-    // stackPush(&spu1.stk, 3);
 
     runProcessor(&spu1);
     

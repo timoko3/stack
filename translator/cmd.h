@@ -37,7 +37,7 @@ static command_t commands[] = {
     {JE,      "JE",      0, LABEL_PARAM },
     {JNE,     "JNE",     0, LABEL_PARAM },
     {CALL,    "CALL",    0, LABEL_PARAM },
-    {RET,     "RET",     0, NO_PARAM    }
+    {RET,     "RET",     0, REG_PARAM   }
 };
 
 #endif /* TRANSLATOR_CMD_H */

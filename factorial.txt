@@ -8,8 +8,8 @@ OUT
 HLT
 :factorial  ;factorial function
 PUSHREG BX ; dostaem pervoe znachenie N
-PUSH 1     ; decrimentation N
 PUSHREG BX ; decrimentation N
+PUSH 1     ; decrimentation N
 SUB        ; decrimentation N
 POPREG BX  ; decrimentation N
 PUSH 1     ; if begin
