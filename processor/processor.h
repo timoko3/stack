@@ -18,6 +18,11 @@ enum processorStatus{
     SPU_PROCESS_ERROR
 };
 
+bool spuPush(processor* spu, stackData_t data);
+bool spuPop(processor* spu, stackData_t* data);
+bool spuJump(processor* spu, stackData_t data);
+bool spuGetArg(processor* spu, stackData_t* data);
+
 processorStatus processorCtor(processor* spu);
 processorStatus processorDtor(processor* spu);
 bool loadOpcode(processor* spu, buffer_t opcode);

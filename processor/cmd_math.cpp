@@ -40,7 +40,6 @@ bool sqrt(cmdParam_t param, cmdParam_t* result){
     return true;
 }
 
-
 bool lt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 < param2);
     return true;

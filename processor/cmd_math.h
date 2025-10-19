@@ -1,9 +1,9 @@
 typedef int cmdParam_t;
 
-bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool add(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool sub(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool mul(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool sqrt(cmdParam_t param,  cmdParam_t* result);
 
 bool lt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
