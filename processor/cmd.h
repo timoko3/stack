@@ -7,13 +7,14 @@
 
 typedef int cmdParam_t;
 
-typedef bool (*handler_t)(processor* spu);
-typedef bool (*handler_t)(processor* spu);
+typedef bool (*commandGroupHandler_t)(processor* spu, command cmd);
+typedef bool (*mathHandler_t)(processor* spu);
 
 struct command{
-    cmdOpcodes     code; 
-    handler_t      handler;
-    int            nArgs; 
+    cmdOpcodes            code; 
+    commandGroupHandler_t groupHandler;
+    mathHandler_t     
+    int                   nArgs; 
 };
 
 // pop
@@ -31,22 +32,22 @@ struct command{
 
 // setPc
 
-// static bool calcCommand(processor* spu, command cmd){
-//     assert(spu);
+static bool calcCommand(processor* spu, command cmd){
+    assert(spu);
 
-//     cmdParam_t arg1 = 0, arg2 = 0;
+    cmdParam_t arg1 = 0, arg2 = 0;
 
-//     spuPop(spu, &arg1);
-//     spuPop(spu, &arg2);
+    spuPop(spu, &arg1);
+    spuPop(spu, &arg2);
 
-//     cmdParam_t result = 0;
+    cmdParam_t result = 0;
     
     
 
-//     spuPush(spu, result);
+    spuPush(spu, result);
 
-//     return check;
-// }
+    return check;
+}
 
 // static bool spuCommand(processor* spu, command cmd){
 //     assert(spu);
@@ -111,17 +112,6 @@ bool mul(processor* spu){
     return true;
 }
 
-bool mul(processor* spu){
-    cmdParam_t arg1 = 0, arg2 = 0;
-    
-    spuPop(spu, &arg1);
-    spuPop(spu, &arg2);
-
-    spuPush(spu, arg1 * arg2);
-
-    return true;
-}
-
 bool div(processor* spu){
     cmdParam_t arg1 = 0, arg2 = 0;
     
@@ -165,8 +155,6 @@ const command commandsHandler[]{
     {ADD,  add,   0}, 
     {SUB,  sub,   0},
     {MUL,  mul,   0},
-    {DIV,  div,   0},
-    {SQRT, sqrt,  0},
 
     {JB,  jb,    1},
     // {PUSH,    {.spuHandler = push},        PROCESSOR, NO_CMD_PARAM},
