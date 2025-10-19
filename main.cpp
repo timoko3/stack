@@ -7,7 +7,7 @@
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
 
-const char* textCommandsFileName   = "test.txt"; 
+const char* textCommandsFileName   = "quadratic.txt"; 
 const char* outputByteCodeFileName = "factorial.asm";
 
 // #define BUFFER_FROM_FILE
@@ -34,12 +34,7 @@ int main(void){
 
     loadOpcode(&spu1, *opcode);
 
-    spuPush(&spu1, 8);
-    spuPush(&spu1, 5);
-    spuPush(&spu1, 1);
-
     runProcessor(&spu1);
-    stackDump(&spu1.stk, "", "", 0);
     
     processorDtor(&spu1);
 

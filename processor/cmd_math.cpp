@@ -3,22 +3,22 @@
 #include <limits.h>
 #include <math.h>
 
-bool add(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool addMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = param1 + param2;
     return true;
 }
 
-bool sub(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){   
+bool subMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){   
     *result = param1 - param2;
     return true;
 }
 
-bool mul(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){  
+bool mulMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){  
     *result = param1 * param2;
     return true;
 }
 
-bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){  
+bool divMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){  
     if(param2 == 0){
         printf("Деление на 0 невозможно\n");
         return false;
@@ -29,7 +29,7 @@ bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     return true;
 }
 
-bool sqrt(cmdParam_t param, cmdParam_t* result){
+bool sqrtMath(cmdParam_t param, cmdParam_t* result){
     if(param < 0){
         printf("Взятие корня из числа меньше 0 невозможно\n");
         return false;
@@ -40,32 +40,32 @@ bool sqrt(cmdParam_t param, cmdParam_t* result){
     return true;
 }
 
-bool lt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool ltMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 < param2);
     return true;
 }
 
-bool le(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool leMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 <= param2);
     return true;
 }
 
-bool gt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool gtMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 > param2);
     return true;
 }
 
-bool ge(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool geMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 >= param2);
     return true;
 }
 
-bool eq(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool eqMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 == param2);
     return true;
 }
 
-bool ne(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
+bool neMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 != param2);
     return true;
 }

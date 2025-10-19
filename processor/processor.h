@@ -5,12 +5,15 @@
 #include "cmdOpcodes.h"
 #include "general/strFunc.h" 
 
+typedef bool workStatus;
+
 struct processor{
     stack stk;
     stack funcRetAddr;
     int regs[N_REGISTERS] = {};
     size_t pc; 
     buffer_t opcode;
+    workStatus isWork;
 };
 
 enum processorStatus{
@@ -22,6 +25,11 @@ bool spuPush(processor* spu, stackData_t data);
 bool spuPop(processor* spu, stackData_t* data);
 bool spuJump(processor* spu, stackData_t data);
 bool spuGetArg(processor* spu, stackData_t* data);
+bool spuPushReg(processor* spu, stackData_t* regNumber);
+bool spuPopReg(processor* spu, stackData_t* regNumber);
+bool spuHlt(processor* spu);
+bool spuCall(processor* spu);
+bool spuRet(processor* spu);
 
 processorStatus processorCtor(processor* spu);
 processorStatus processorDtor(processor* spu);

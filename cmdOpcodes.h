@@ -11,6 +11,7 @@ enum cmdOpcodes{
     MUL,
     DIV,
     SQRT,
+    IN,
     OUT,
     HLT,
     JMP,

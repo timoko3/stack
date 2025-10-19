@@ -12,8 +12,8 @@ PUSHREG BX ; decrimentation N
 PUSH 1     ; decrimentation N
 SUB        ; decrimentation N
 POPREG BX  ; decrimentation N
-PUSH 1     ; if begin
 PUSHREG BX ;
+PUSH 1     ; if begin
 JBE :end     ; if end
 CALL :factorial
 PUSHREG RX

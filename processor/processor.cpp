@@ -16,6 +16,7 @@ processorStatus processorCtor(processor* spu){
     stackCtor(&spu->stk, 10);
     stackCtor(&spu->funcRetAddr, 10);
     spu->pc = 0;
+    spu->isWork = true;
     
     return SPU_PROCESS_OK;
 }
@@ -29,6 +30,8 @@ processorStatus processorDtor(processor* spu){
     poisonMemory(spu->regs, sizeof(spu->regs));
     
     poisonMemory(&spu->pc, sizeof(spu->pc));
+
+    spu->isWork = false;
 
     return SPU_PROCESS_OK;
 }
@@ -57,22 +60,27 @@ bool executeCommand(processor* spu){
     
     processorDump(spu);
 
+    if(spu->isWork == false){
+        return false;
+    }
+
     for(size_t curCommandInd = 0; curCommandInd < sizeof(commandsHandler) / sizeof(command); curCommandInd++){
         if(commandsHandler[curCommandInd].code == spu->opcode.ptr[spu->pc]){
             command curCmd = commandsHandler[curCommandInd];
 
             assert(curCmd.handler);
             size_t old_ps = spu->pc;
+            ///
             curCmd.handler(spu);
             // return_value == if command don't change
             if (spu->pc == old_ps) {
-                spu->pc += curCmd.nArgs;
+                (spu->pc)++;
+                spu->pc += (size_t) curCmd.nArgs;
             }
             
             break;
         } 
     } 
-    (spu->pc)++;
 
     return true;
 }
@@ -88,7 +96,9 @@ bool spuPush(processor* spu, stackData_t data){
 bool spuPop(processor* spu, stackData_t* data){
     assert(spu);
 
-    stackPop(&(spu->stk), data); 
+    if(stackPop(&(spu->stk), data) == EMPTY_STACK){
+        return false;
+    }
 
     return true;
 }
@@ -96,144 +106,80 @@ bool spuPop(processor* spu, stackData_t* data){
 bool spuJump(processor* spu, stackData_t pos){
     assert(spu);
 
-    spu->pc = pos - 1; 
+    spu->pc = (size_t) pos; 
 
     return true;
 }
 
-bool spuGetArg(processor* spu, stackData_t* data){ // index
+bool spuGetArg(processor* spu, stackData_t* index){ 
     assert(spu);
 
-    *data = (size_t) spu->opcode.ptr[spu->pc + 1];
+    *index = (size_t) spu->opcode.ptr[spu->pc + 1];
+
+    return true;
+}  
+
+bool spuPushReg(processor* spu, stackData_t* regNumber){
+    assert(spu);
+    assert(regNumber);
+
+    int curRegValue = spu->regs[*regNumber];
+    stackPush(&spu->stk, curRegValue);
 
     return true;
 }
 
-// static bool unaryCalcCommand(processor* spu, handlers handler){
-//     assert(spu);
+bool spuPopReg(processor* spu, stackData_t* regNumber){
+    assert(spu);
+    assert(regNumber);
+
+    stackPop(&spu->stk, &spu->regs[*regNumber]);
+
+    return true;
+}
+
+bool spuHlt(processor* spu){
+    assert(spu);
+
+    spu->isWork = false;
+
+    return true;
+}
+
+bool spuCall(processor* spu){
+    assert(spu);
+
+    stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 2);
+
+    stackData_t pos = 0;
+    spuGetArg(spu, &pos);
+
+    spuJump(spu, pos);
     
-//     stackData_t param = 0;
-    
-//     stackPop(&spu->stk, &param);
+    return true;
+}
 
-//     stackData_t result = 0;
-//     bool check = handler.calcUnaryHandler(param, &result);
+bool spuRet(processor* spu){
+    assert(spu);
 
-//     stackPush(&spu->stk, result);
+    stackData_t regNum = 0;
+    spuGetArg(spu, &regNum);
+    spuPopReg(spu, &regNum);
 
-//     return check;
-// }   
+    stackData_t retAddr = 0;
+    stackPop(&(spu->funcRetAddr), &retAddr);
+    spu->pc = (size_t) retAddr;
 
-// static bool binaryCalcCommand(processor* spu, handlers handler){
-//     assert(spu);
-    
-//     stackData_t param1 = 0;
-//     stackData_t param2 = 0;
-    
-//     stackPop(&spu->stk, &param2);
-//     stackPop(&spu->stk, &param1);
-
-//     stackData_t result = 0;
-//     bool check = handler.calcBinaryHandler(param1, param2, &result);
-
-//     stackPush(&spu->stk, result);
-
-//     return check;
-// }   
-
-// bool push(processor* spu){
-//     assert(spu);
-
-//     stackData_t pushParameter = spu->opcode.ptr[spu->pc + 1];
-//     stackPush(&(spu->stk), pushParameter); 
-//     spu->pc++;
-
-//     processorDump(spu);
-
-//     return true;
-// }
-
-// bool pushreg(processor* spu){
-//     assert(spu);
-
-//     int curReg = spu->regs[spu->opcode.ptr[spu->pc + 1]];
-//     printf("curReg : %d\n", curReg);
-//     stackPush(&spu->stk, curReg);
-
-//     (spu->pc)++;
-
-//     return true; 
-// }
-
-// bool popreg(processor* spu){
-//     assert(spu);
-
-//     stackPop(&spu->stk, &(spu->regs[spu->opcode.ptr[spu->pc + 1]]));
-
-//     (spu->pc)++;
-
-//     return true; 
-// }
-
-// bool out(processor* spu){
-//     assert(spu);
-
-//     printf("Все элементы стека:\n");
-
-//     stackData_t curElem = 0;
-//     while(stackPop(&spu->stk, &curElem) != EMPTY_STACK){
-//         if(spu->stk.error.type != PROCESS_OK){
-//             break;
-//         }
-
-//         printf("%d ", curElem);
-//     }
-//     printf("\n");
-
-//     return true;
-// }
-
-// bool hlt(processor* spu){
-//     assert(spu);
-
-//     return false;
-// }
-
-// bool jmp(processor* spu){
-//     assert(spu);
-
-//     spu->pc = (size_t) spu->opcode.ptr[spu->pc + 1];
-
-//     return true;
-// }
-
-// bool callFunc(processor* spu){
-//     assert(spu);
-
-//     stackPush(&(spu->funcRetAddr), (stackData_t) spu->pc + 1);
-//     jmp(spu);
-    
-//     return true;
-// }
-
-// bool returnFunc(processor* spu){
-//     assert(spu);
-
-//     popreg(spu);
-
-//     stackData_t retAddr = 0;
-//     stackPop(&(spu->funcRetAddr), &retAddr);
-//     spu->pc = (size_t) retAddr;
-
-//     return true;
-// }
+    return true;
+}
 
 static void processorDump(processor* spu){
     assert(spu);
 
     printf("\nSPU dump:");
 
-    printf("\n\tpc: %lu", spu->pc);
+    printf("\n\tpc:     ");
+    printf(SET_STYLE_BOLD_FONT_PURPLE "%lu" RESET, spu->pc);
 
     printf("\n\tstack: ");
     simplePrintStack(&spu->stk);
@@ -259,25 +205,35 @@ static void simplePrintStack(stack* stk){
     
     for(size_t curStackElem = 0; curStackElem < stk->capacity; curStackElem++){
         if((curStackElem % 4) == 0) printf("\n\t\t");
-        printf("%d ", stk->data[curStackElem]);
+
+        if(stk->data[curStackElem] == POISON_NUMBER){
+            printf(SET_STYLE_ITALICS_FONT_TURQUOISE "POISON " RESET);
+        }
+        else {
+            printf("%d ", stk->data[curStackElem]);
+        }
     }
 }
 
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc){
     assert(byteCode);
 
-    for(size_t curByte = 0; curByte < byteCodeSize * sizeof(int); curByte++){
-        if((curByte % 4) == 0) printf(" ");
-        if(((curByte % 16) == 0)) printf("\n\t\t");
-        if((curByte == pc * 4)){
-            printf(SET_STYLE_BOLD_FONT_PURPLE "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+    printf("\n\t\t " SET_STYLE_BOLD_FONT_RED "%08x %08x %08x %08x" RESET, (unsigned int) 0,
+                                                                          (unsigned int) 1,
+                                                                          (unsigned int) 2,
+                                                                          (unsigned int) 3);
+    for(size_t curByte = 0; curByte < byteCodeSize; curByte++){
+        if((curByte % 1) == 0) printf(" ");
+        if(((curByte % 4) == 0)) printf("\n\t" SET_STYLE_BOLD_FONT_RED "%08x " RESET, (unsigned int) curByte);
+        if((curByte == pc)){
+            printf(SET_STYLE_BOLD_FONT_PURPLE "%08x" RESET, (unsigned int) *(byteCode + curByte));
         }
         else{
-            printf(SET_STYLE_BOLD_FONT_YELLOW "%02x" RESET, *((unsigned  char*)(byteCode) + curByte));
+            printf(SET_STYLE_BOLD_FONT_YELLOW "%08x" RESET, (unsigned int) *(byteCode + curByte));
         }
     }
 }
-
+ЭТО ИЗ-ЗА СВЕТЛОЙ ТЕМЫ
 static void printRegs(int* regs){
     assert(regs);
     

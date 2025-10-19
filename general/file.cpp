@@ -102,7 +102,6 @@ static string* divideBufferToStringsStructure(char* buffer, size_t nStrings){
         fprintf(stderr, "buffer[curSym + 1] = %d\n", buffer[curSym + 1]);
         #endif /* DEBUG */
         if(buffer[curSym] == END_STR){
-            
             strings[curStr].ptr = buffer + curSym + 1;
             strings[curStr - 1].len = (size_t) strings[curStr].ptr - 
                                       (size_t) strings[curStr - 1].ptr;

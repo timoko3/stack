@@ -1,16 +1,16 @@
 typedef int cmdParam_t;
 
-bool add(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool sub(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool mul(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool div(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool sqrt(cmdParam_t param,  cmdParam_t* result);
+bool addMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool subMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool mulMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool divMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool sqrtMath(cmdParam_t param,  cmdParam_t* result);
 
-bool lt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool le(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool gt(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool ge(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool eq(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
-bool ne(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool ltMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool leMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool gtMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool geMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool eqMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
+bool neMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 
     
