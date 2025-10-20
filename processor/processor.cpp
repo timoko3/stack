@@ -58,7 +58,7 @@ bool runProcessor(processor* spu){
 bool executeCommand(processor* spu){
     assert(spu);
     
-    processorDump(spu);
+    // processorDump(spu);
 
     if(spu->isWork == false){
         return false;
@@ -233,7 +233,7 @@ static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc){
         }
     }
 }
-ЭТО ИЗ-ЗА СВЕТЛОЙ ТЕМЫ
+
 static void printRegs(int* regs){
     assert(regs);
     

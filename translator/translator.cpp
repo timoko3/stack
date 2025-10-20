@@ -131,13 +131,12 @@ static bool assemblePass(translator_t* translator){
 
         if(getLabel(translator)) continue;
 
-        char curCmdName[COMMAND_NAME_MAX_SIZE] = {0};
-        sscanf(translator->input_buffer.ptrs[curStringInd].ptr, "%c", &curCmdName[0]);
-        if(curCmdName[0] == '\n'){
+        if (translator->input_buffer.ptrs[curStringInd].ptr[0] == '\n'){
             $
             continue;
         }
-
+        
+        char curCmdName[COMMAND_NAME_MAX_SIZE] = {0};
         sscanf(translator->input_buffer.ptrs[curStringInd].ptr, "%s", curCmdName);
         translator->curState.cmdName = curCmdName;
         ON_DEBUG(printf("curCmdName: %s\n", curCmdName))

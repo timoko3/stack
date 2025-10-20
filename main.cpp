@@ -12,9 +12,14 @@ const char* outputByteCodeFileName = "factorial.asm";
 
 // #define BUFFER_FROM_FILE
 
-int main(void){
+int main(int argc, char* argv[]){
+    const char* filename = textCommandsFileName;
+    if(argc == 2){
+        filename = argv[1];
+    }
+
     data buf = {};
-    if((parseStringsFile(&buf, textCommandsFileName)) == EXIT_FAILURE) return false;
+    if((parseStringsFile(&buf, filename)) == EXIT_FAILURE) return false;
 
     translator_t translator;
     translatorCtor(&translator);

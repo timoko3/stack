@@ -103,6 +103,7 @@ bool out(processor* spu){
     while(spuPop(spu, &curElem) != false){
         printf("%d ", curElem);
     }
+    printf("\n");
     return true;
 }
 

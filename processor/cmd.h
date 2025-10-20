@@ -10,22 +10,24 @@ struct command{
     int                   nArgs; 
 };
 
+#define __cringe(...)  __VA_ARGS__
+
 const command commandsHandler[]{ 
-    {ADD,  add,   0}, 
-    {SUB,  sub,   0},
-    {MUL,  mul,   0},
-    {DIV,  div,   0},
-    {SQRT, sqrt,  0},
-
-
-    {JMP, jmp,    1},
-    {JB,  jb,     1},
-    {JBE, jbe,    1},
-    {JA,  ja ,    1},
-    {JAE, jae,    1},
-    {JE,  je ,    1},
-    {JNE, jne,    1},
-
+    {ADD,       add,       0}, 
+    {SUB,       sub,       0},
+    {MUL,       mul,       0},
+    {DIV,       div,       0},
+    {SQRT,      sqrt,      0},
+        
+        
+    {JMP,      jmp,        1},
+    {JB,       jb,         1},
+    {JBE,      jbe,        1},
+    {JA,       ja ,        1},
+    {JAE,      jae,        1},
+    {JE,       je ,        1},
+    {JNE,      jne,        1},
+    
     {PUSH,     push,       1},
     {PUSHREG,  pushreg,    1},
     {POPREG,   popreg,     1}, 
@@ -33,8 +35,7 @@ const command commandsHandler[]{
     {OUT,      out,        0},
     {HLT,      hlt,        0},
     {CALL,     callFunc,   1},
-    {RET,      retFunc,    1},
-
+    {RET,      retFunc,    1}
 }; 
 
 #endif /* PROCESSOR_CMD_H */

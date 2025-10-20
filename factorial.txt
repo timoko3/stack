@@ -1,4 +1,4 @@
-PUSH 6
+IN
 PUSH 1
 POPREG AX ;In AX the result is stored
 POPREG BX ;In BX curN
@@ -20,4 +20,8 @@ PUSHREG RX
 MUL
 RET
 :end
+RET
+
+:RET5
+PUSH 5
 RET

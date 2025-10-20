@@ -13,8 +13,8 @@ enum param_t{
 struct command_t{
     cmdOpcodes    code;
     const char*   name;
-    unsigned long hash;
     param_t       param;
+    unsigned long hash;
 };
 
 #endif /* TRANSLATOR_CMD_TYPE_H */

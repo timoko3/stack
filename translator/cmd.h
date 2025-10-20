@@ -4,27 +4,27 @@
 #include "cmd_type.h"
 
 command_t commands[] = {
-    {PUSH,    "PUSH",    0, NUMBER_PARAM},
-    {POP,     "POP",     0, NO_PARAM    },
-    {PUSHREG, "PUSHREG", 0, REG_PARAM   },
-    {POPREG,  "POPREG",  0, REG_PARAM   },
-    {ADD,     "ADD",     0, NO_PARAM    },
-    {SUB,     "SUB",     0, NO_PARAM    },
-    {MUL,     "MUL",     0, NO_PARAM    },
-    {DIV,     "DIV",     0, NO_PARAM    },
-    {SQRT,    "SQRT",    0, NO_PARAM    },
-    {IN,      "IN",      0, NO_PARAM    },
-    {OUT,     "OUT",     0, NO_PARAM    },
-    {HLT,     "HLT",     0, NO_PARAM    },
-    {JMP,     "JMP",     0, LABEL_PARAM },
-    {JB,      "JB",      0, LABEL_PARAM },
-    {JBE,     "JBE",     0, LABEL_PARAM },
-    {JA,      "JA",      0, LABEL_PARAM },
-    {JAE,     "JAE",     0, LABEL_PARAM },
-    {JE,      "JE",      0, LABEL_PARAM },
-    {JNE,     "JNE",     0, LABEL_PARAM },
-    {CALL,    "CALL",    0, LABEL_PARAM },
-    {RET,     "RET",     0, REG_PARAM   }
+    {PUSH,    "PUSH",     NUMBER_PARAM},
+    {POP,     "POP",      NO_PARAM    },
+    {PUSHREG, "PUSHREG",  REG_PARAM   },
+    {POPREG,  "POPREG",   REG_PARAM   },
+    {ADD,     "ADD",      NO_PARAM    },
+    {SUB,     "SUB",      NO_PARAM    },
+    {MUL,     "MUL",      NO_PARAM    },
+    {DIV,     "DIV",      NO_PARAM    },
+    {SQRT,    "SQRT",     NO_PARAM    },
+    {IN,      "IN",       NO_PARAM    },
+    {OUT,     "OUT",      NO_PARAM    },
+    {HLT,     "HLT",      NO_PARAM    },
+    {JMP,     "JMP",      LABEL_PARAM },
+    {JB,      "JB",       LABEL_PARAM },
+    {JBE,     "JBE",      LABEL_PARAM },
+    {JA,      "JA",       LABEL_PARAM },
+    {JAE,     "JAE",      LABEL_PARAM },
+    {JE,      "JE",       LABEL_PARAM },
+    {JNE,     "JNE",      LABEL_PARAM },
+    {CALL,    "CALL",     LABEL_PARAM },
+    {RET,     "RET",      REG_PARAM   }
 };
 
 #endif /* TRANSLATOR_CMD_H */
