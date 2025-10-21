@@ -40,6 +40,11 @@ bool sqrtMath(cmdParam_t param, cmdParam_t* result){
     return true;
 }
 
+bool absMath(cmdParam_t param, cmdParam_t* result){
+    *result = (param >= 0) ? param : (-1) * param;
+    return true;
+}
+
 bool ltMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result){
     *result = (param1 < param2);
     return true;

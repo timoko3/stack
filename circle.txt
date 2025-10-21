@@ -1,0 +1,59 @@
+IN  ;AMOUNT OF cells
+PUSH -1 ;инициализация счетчика и координат
+POPREG BX
+POPREG AX
+
+IN ;RADIUS
+POPREG FX
+
+:start
+PUSHREG BX ;инкрементация
+PUSH 1
+ADD
+POPREG BX
+
+PUSHREG BX
+PUSHREG AX
+JB :print
+
+OUT
+HLT
+
+:print
+PUSHREG BX ;Подсчет y
+PUSH 10
+DIV
+POPREG CX
+
+PUSHREG BX ;Подсчет x
+PUSHREG CX
+PUSH 10
+MUL
+SUB
+POPREG EX
+
+PUSHREG CX ;квадрат y подсчет
+PUSHREG CX
+MUL 
+POPREG  CX
+
+PUSHREG EX ;квадрат x подсчет
+PUSHREG EX
+MUL 
+POPREG  EX
+
+PUSHREG FX ;Подсчет r квадрата
+PUSHREG FX
+MUL
+
+PUSHREG CX ;считаем растояние
+PUSHREG EX
+ADD
+SQRT
+
+SUB
+ABS
+
+
+
+JMP :start

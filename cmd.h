@@ -13,6 +13,7 @@ enum cmdOpcodes{
     MUL,
     DIV,
     SQRT,
+    ABS,
     IN,
     OUT,
     HLT,
@@ -53,6 +54,7 @@ static command_t commands[]{
     {MUL,      mul,        0, NO_PARAM,     "MUL"    },
     {DIV,      myDiv,      0, NO_PARAM,     "DIV"    },
     {SQRT,     mySqrt,     0, NO_PARAM,     "SQRT"   },
+    {ABS,      myAbs,      0, NO_PARAM,     "ABS"    },
     
         
     {JMP,      jmp,        1, LABEL_PARAM,  "JMP"    },

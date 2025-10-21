@@ -8,6 +8,7 @@ bool subMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool mulMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool divMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool sqrtMath(cmdParam_t param,  cmdParam_t* result);
+bool absMath(cmdParam_t param,  cmdParam_t* result);
 
 bool ltMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool leMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);

@@ -17,6 +17,7 @@ bool sub(processor* spu);
 bool mul(processor* spu);
 bool myDiv(processor* spu);
 bool mySqrt(processor* spu);
+bool myAbs(processor* spu);
 
 bool jmp(processor* spu);
 bool jb(processor* spu);

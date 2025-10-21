@@ -30,6 +30,10 @@ bool mySqrt(processor* spu){
     return unaryOperation(spu, sqrtMath);
 }
 
+bool myAbs(processor* spu){
+    return unaryOperation(spu, absMath);
+}
+
 bool jb(processor* spu){
     return jumpOperation(spu, ltMath);
 }
@@ -105,15 +109,14 @@ bool pushm(processor* spu){
 
 bool popm(processor* spu){
     cmdParam_t regNum = 0;
-$
-$   spuGetArg(spu, &regNum);
 
-$   spuPushReg(spu, &regNum);
-$
-$   cmdParam_t memCellNum = 0;
-$   spuPop(spu, &memCellNum);
-$
-$   spuPopM(spu, &memCellNum);
+    spuGetArg(spu, &regNum);
+    spuPushReg(spu, &regNum);
+
+    cmdParam_t memCellNum = 0;
+    spuPop(spu, &memCellNum);
+
+    spuPopM(spu, &memCellNum);
 
     return true;
 }
