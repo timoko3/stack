@@ -65,7 +65,7 @@ bool runProcessor(processor* spu){
 bool executeCommand(processor* spu){
     assert(spu);
     
-    processorDump(spu);
+    // processorDump(spu);
     
     if(spu->isWork == false){
         return false;
@@ -269,8 +269,10 @@ static void printRegs(int* regs){
     assert(regs);
     
     printf("\n\t\t");
+    printf("AX  BX  CX  DX  EX  FX  GX  HX  IX  JX\n");
+    printf("\n\t\t");
     for(size_t curReg = 0; curReg < N_REGISTERS; curReg++){
-        printf("%d ", regs[curReg]);
+        printf("%-3d ", regs[curReg]);
     }
 }
 

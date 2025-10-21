@@ -6,6 +6,11 @@ POPREG AX
 IN ;RADIUS
 POPREG FX
 
+PUSHREG FX ;Подсчет r квадрата
+PUSHREG FX
+MUL
+POPREG FX
+
 :start
 PUSHREG BX ;инкрементация
 PUSH 1
@@ -32,28 +37,51 @@ MUL
 SUB
 POPREG EX
 
-PUSHREG CX ;квадрат y подсчет
-PUSHREG CX
-MUL 
-POPREG  CX
+PUSHREG AX ;Подсчет x - x0
+SQRT
+PUSH 2
+DIV
+PUSHREG EX
+SUB
+ABS
+POPREG EX
 
-PUSHREG EX ;квадрат x подсчет
+PUSHREG AX ;Подсчет y - y0
+SQRT
+PUSH 2
+DIV
+PUSHREG CX
+SUB
+ABS
+POPREG CX
+
+PUSHREG EX ;квадрат x - x0 подсчет
 PUSHREG EX
 MUL 
 POPREG  EX
 
-PUSHREG FX ;Подсчет r квадрата
-PUSHREG FX
-MUL
+PUSHREG CX ;квадрат y - y0 подсчет
+PUSHREG CX
+MUL 
+POPREG  CX
 
 PUSHREG CX ;считаем растояние
 PUSHREG EX
 ADD
-SQRT
+
+PUSHREG FX
 
 SUB
 ABS
+POPREG GX
+
+PUSHREG GX
+PUSH 3
+JA :skip
+
+PUSH 4
+POPM [BX]
 
 
-
+:skip
 JMP :start
