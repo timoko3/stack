@@ -3,7 +3,7 @@ PUSH 1
 POPREG AX ;In AX the result is stored
 POPREG BX ;In BX curN
 CALL :factorial
-PUSHREG RX
+PUSHREG DX
 OUT
 HLT
 :factorial  ;factorial function
@@ -14,14 +14,12 @@ SUB        ; decrimentation N
 POPREG BX  ; decrimentation N
 PUSHREG BX ;
 PUSH 1     ; if begin
-JBE :end     ; if end
+JBE :end   ; if end
 CALL :factorial
-PUSHREG RX
+PUSHREG DX
 MUL
+POPREG DX
 RET
 :end
-RET
-
-:RET5
-PUSH 5
+POPREG DX
 RET

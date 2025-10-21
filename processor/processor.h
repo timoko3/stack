@@ -2,7 +2,6 @@
 #define PROCESSOR_H
 
 #include "general/stack/stack.h"
-#include "cmdOpcodes.h"
 #include "general/strFunc.h" 
 
 typedef bool workStatus;
@@ -10,7 +9,7 @@ typedef bool workStatus;
 struct processor{
     stack stk;
     stack funcRetAddr;
-    int regs[N_REGISTERS] = {};
+    int* regs;
     size_t pc; 
     buffer_t opcode;
     workStatus isWork;

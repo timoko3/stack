@@ -3,7 +3,7 @@
 
 #include "general/file.h"
 #include "general/strFunc.h"
-#include "cmd_type.h"
+#include "cmd.h"
 
 #define DEBUG_TRANSLATOR 0
 

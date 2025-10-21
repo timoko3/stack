@@ -1,4 +1,5 @@
 #include "cmd_spu.h"
+#include "cmd_math.h"
 
 static bool unaryOperation(processor* spu, unaryHandler handler);
 static bool binaryOperation(processor* spu, binaryHandler handler);
@@ -19,11 +20,11 @@ bool mul(processor* spu){
     return binaryOperation(spu, mulMath);
 }
 
-bool div(processor* spu){
+bool myDiv(processor* spu){
     return binaryOperation(spu, divMath);
 }
 
-bool sqrt(processor* spu){
+bool mySqrt(processor* spu){
     return unaryOperation(spu, sqrtMath);
 }
 

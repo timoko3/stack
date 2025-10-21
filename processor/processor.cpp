@@ -5,6 +5,8 @@
 
 #include <math.h>
 
+#define $ fprintf(stderr, "MEOW in %s:%d\n", __FILE__, __LINE__);
+
 static void processorDump(processor* spu);
 static void simplePrintStack(stack* stk);
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
@@ -17,7 +19,9 @@ processorStatus processorCtor(processor* spu){
     stackCtor(&spu->funcRetAddr, 10);
     spu->pc = 0;
     spu->isWork = true;
-    
+    spu->regs = (int*) calloc(N_REGISTERS, sizeof(int));
+    assert(spu->regs);
+
     return SPU_PROCESS_OK;
 }
 
@@ -28,6 +32,7 @@ processorStatus processorDtor(processor* spu){
     stackDtor(&spu->funcRetAddr);
 
     poisonMemory(spu->regs, sizeof(spu->regs));
+    free(spu->regs);
     
     poisonMemory(&spu->pc, sizeof(spu->pc));
 
@@ -58,16 +63,16 @@ bool runProcessor(processor* spu){
 bool executeCommand(processor* spu){
     assert(spu);
     
-    // processorDump(spu);
-
+    processorDump(spu);
+    
     if(spu->isWork == false){
         return false;
     }
-
-    for(size_t curCommandInd = 0; curCommandInd < sizeof(commandsHandler) / sizeof(command); curCommandInd++){
-        if(commandsHandler[curCommandInd].code == spu->opcode.ptr[spu->pc]){
-            command curCmd = commandsHandler[curCommandInd];
-
+    
+    for(size_t curCommandInd = 0; curCommandInd <  sizeof(commands) / sizeof(command_t); curCommandInd++){
+        if(commands[curCommandInd].code == spu->opcode.ptr[spu->pc]){
+            command_t curCmd = commands[curCommandInd];
+            $
             assert(curCmd.handler);
             size_t old_ps = spu->pc;
             ///
@@ -81,7 +86,7 @@ bool executeCommand(processor* spu){
             break;
         } 
     } 
-
+    
     return true;
 }
 
@@ -162,10 +167,6 @@ bool spuCall(processor* spu){
 bool spuRet(processor* spu){
     assert(spu);
 
-    stackData_t regNum = 0;
-    spuGetArg(spu, &regNum);
-    spuPopReg(spu, &regNum);
-
     stackData_t retAddr = 0;
     stackPop(&(spu->funcRetAddr), &retAddr);
     spu->pc = (size_t) retAddr;
@@ -195,7 +196,6 @@ static void processorDump(processor* spu){
 
     printf("\tRegs:");
     printRegs(spu->regs);
-
     getchar();
     printf("\n\n");
 }

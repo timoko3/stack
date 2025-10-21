@@ -1,3 +1,6 @@
+#ifndef CMD_MATH_H
+#define CMD_MATH_H
+
 typedef int cmdParam_t;
 
 bool addMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
@@ -13,4 +16,4 @@ bool geMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool eqMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 bool neMath(cmdParam_t param1, cmdParam_t param2, cmdParam_t* result);
 
-    
+#endif /* CMD_MATH_H */

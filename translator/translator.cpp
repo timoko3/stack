@@ -1,5 +1,4 @@
 #include "translator.h"
-#include "cmd.h"
 #include "general/hash.h"
 #include "general/poison.h"
 
@@ -213,22 +212,11 @@ static bool addCommandParameter(translator_t* translator){
 static bool addRegParameter(translator_t* translator){
     assert(translator);
 
-    if(translator->opcode.ptr[translator->opcode.size - 1] == RET){
-        translator->opcode.ptr[translator->opcode.size] = N_REGISTERS - 1;
-
-        (translator->opcode.size)++;
-
-        return true;
-    }
-
     char reg[REGISTER_NAME_MAX_SIZE];
     sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s %sX\n", reg);
-    if (reg[0] == 'R'){
-        translator->opcode.ptr[translator->opcode.size] = N_REGISTERS - 1;
-    }
-    else{
-        translator->opcode.ptr[translator->opcode.size] = reg[0] - UPPER_SYM_MIN;
-    }
+    
+    translator->opcode.ptr[translator->opcode.size] = reg[0] - UPPER_SYM_MIN;
+    
     (translator->opcode.size)++;
 
     ON_DEBUG(printf("byteCodeBuffer now: %d\n", translator->opcode.ptr[translator->opcode.size]);)

@@ -1,5 +1,7 @@
+#ifndef CMD_SPU_H
+#define CMD_SPU_H
+
 #include "processor.h"
-#include "cmd_math.h"
 
 typedef int cmdParam_t;
 
@@ -13,8 +15,8 @@ typedef bool (*binaryHandler)(cmdParam_t arg1, cmdParam_t arg2,
 bool add(processor* spu);
 bool sub(processor* spu);
 bool mul(processor* spu);
-bool div(processor* spu);
-bool sqrt(processor* spu);
+bool myDiv(processor* spu);
+bool mySqrt(processor* spu);
 
 bool jmp(processor* spu);
 bool jb(processor* spu);
@@ -33,6 +35,7 @@ bool hlt(processor* spu);
 bool callFunc(processor* spu);
 bool retFunc(processor* spu);
 
+#endif /* CMD_SPU_H */
 
 
 
