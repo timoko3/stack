@@ -280,7 +280,7 @@ static void printRam(ram_t* ram){
     assert(ram);
 
     for(size_t curMemCell = 0; curMemCell < RAM_CAPACITY; curMemCell++){
-        if(((curMemCell % 10) == 0)) printf("\n\t\t");
+        if(((curMemCell % 100) == 0)) printf("\n\t\t");
         printf(SET_STYLE_ITALICS_FONT_GREEN "%d " RESET, ram[curMemCell]);
     }
 }

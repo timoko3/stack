@@ -1,4 +1,10 @@
 IN  ;AMOUNT OF cells
+
+POPREG AX
+PUSHREG AX ;Получение координат центра
+SQRT
+POPREG JX
+
 PUSH -1 ;инициализация счетчика и координат
 POPREG BX
 POPREG AX
@@ -26,19 +32,18 @@ HLT
 
 :print
 PUSHREG BX ;Подсчет y
-PUSH 10
+PUSHREG JX
 DIV
 POPREG CX
 
 PUSHREG BX ;Подсчет x
 PUSHREG CX
-PUSH 10
+PUSHREG JX
 MUL
 SUB
 POPREG EX
 
-PUSHREG AX ;Подсчет x - x0
-SQRT
+PUSHREG JX ;Подсчет x - x0
 PUSH 2
 DIV
 PUSHREG EX
@@ -46,8 +51,7 @@ SUB
 ABS
 POPREG EX
 
-PUSHREG AX ;Подсчет y - y0
-SQRT
+PUSHREG JX ;Подсчет y - y0
 PUSH 2
 DIV
 PUSHREG CX
@@ -76,10 +80,10 @@ ABS
 POPREG GX
 
 PUSHREG GX
-PUSH 3
+PUSH 50
 JA :skip
 
-PUSH 4
+PUSH 5
 POPM [BX]
 
 
