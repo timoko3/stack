@@ -26,7 +26,9 @@ enum cmdOpcodes{
     CALL,
     RET,
     PUSHREG = 32 + PUSH,
-    POPREG
+    POPREG,
+    PUSHM,
+    POPM
 };
 
 enum param_t{
@@ -64,6 +66,9 @@ static command_t commands[]{
     {PUSH,     push,       1, NUMBER_PARAM, "PUSH"   },
     {PUSHREG,  pushreg,    1, REG_PARAM,    "PUSHREG"},
     {POPREG,   popreg,     1, REG_PARAM,    "POPREG" },
+    {PUSHM,    pushm,      1, REG_PARAM,    "PUSHM"  },
+    {POPM,     popm,       1, REG_PARAM,    "POPM"   },
+
     {IN,       in,         0, NO_PARAM,     "IN"     },
     {OUT,      out,        0, NO_PARAM,     "OUT"    },
     {HLT,      hlt,        0, NO_PARAM,     "HLT"    },

@@ -1,8 +1,10 @@
+#include "VM/ram.h"
 #include "processor/processor.h"
 #include "translator/translator.h"
 #include "general/file.h"
 #include "general/poison.h"
 #include "general/stack/stack.h"
+
 
 const char* const FLAG_INPUT_FILE  = "-i";
 const char* const FLAG_OUTPUT_FILE = "-o";
@@ -20,6 +22,9 @@ int main(int argc, char* argv[]){
 
     data buf = {};
     if((parseStringsFile(&buf, filename)) == EXIT_FAILURE) return false;
+
+    ram_t* RAM = NULL;
+
 
     translator_t translator;
     translatorCtor(&translator);

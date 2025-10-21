@@ -3,6 +3,7 @@
 
 #include "general/stack/stack.h"
 #include "general/strFunc.h" 
+#include "VM/ram.h"
 
 typedef bool workStatus;
 
@@ -13,6 +14,7 @@ struct processor{
     size_t pc; 
     buffer_t opcode;
     workStatus isWork;
+    ram_t* RAM;
 };
 
 enum processorStatus{

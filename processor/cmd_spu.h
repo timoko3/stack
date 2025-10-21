@@ -29,6 +29,8 @@ bool jne(processor* spu);
 bool push(processor* spu);
 bool pushreg(processor* spu);
 bool popreg(processor* spu);
+bool pushm(processor* spu);
+bool popm(processor* spu);
 bool in(processor* spu);
 bool out(processor* spu);
 bool hlt(processor* spu);
