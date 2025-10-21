@@ -7,13 +7,14 @@
 
 #define $ fprintf(stderr, "MEOW in %s:%d\n", __FILE__, __LINE__);
 
-static void processorDump(processor* spu);
 static void simplePrintStack(stack* stk);
 static void printByteCode(int* byteCode, size_t byteCodeSize, size_t pc);
 static void printRegs(int* regs);
+static void printRam(ram_t* ram);
 
-processorStatus processorCtor(processor* spu){
+processorStatus processorCtor(processor* spu, ram_t* ram){
     assert(spu);
+    assert(ram);
     
     stackCtor(&spu->stk, 10);
     stackCtor(&spu->funcRetAddr, 10);
@@ -21,6 +22,7 @@ processorStatus processorCtor(processor* spu){
     spu->isWork = true;
     spu->regs = (int*) calloc(N_REGISTERS, sizeof(int));
     assert(spu->regs);
+    spu->RAM  = ram;
 
     return SPU_PROCESS_OK;
 }
@@ -143,6 +145,30 @@ bool spuPopReg(processor* spu, stackData_t* regNumber){
     return true;
 }
 
+bool spuPushM(processor* spu, stackData_t* memCellNum){
+    assert(spu);
+    assert(memCellNum);
+
+    stackData_t data = 0;
+    data = spu->RAM[*memCellNum];
+
+    stackPush(&spu->stk, data);
+
+    return true;
+}
+
+bool spuPopM(processor* spu, stackData_t* memCellNum){
+    assert(spu);
+    assert(memCellNum);
+
+    stackData_t data = 0;
+    stackPop(&spu->stk, &data);
+
+    spu->RAM[*memCellNum] = data;
+
+    return true;
+}
+
 bool spuHlt(processor* spu){
     assert(spu);
 
@@ -174,7 +200,7 @@ bool spuRet(processor* spu){
     return true;
 }
 
-static void processorDump(processor* spu){
+void processorDump(processor* spu){
     assert(spu);
 
     printf("\nSPU dump:");
@@ -196,6 +222,11 @@ static void processorDump(processor* spu){
 
     printf("\tRegs:");
     printRegs(spu->regs);
+    printf("\n");
+
+    printf("\tRAM:");
+    printRam(spu->RAM);
+
     getchar();
     printf("\n\n");
 }
@@ -240,5 +271,14 @@ static void printRegs(int* regs){
     printf("\n\t\t");
     for(size_t curReg = 0; curReg < N_REGISTERS; curReg++){
         printf("%d ", regs[curReg]);
+    }
+}
+
+static void printRam(ram_t* ram){
+    assert(ram);
+
+    for(size_t curMemCell = 0; curMemCell < RAM_CAPACITY; curMemCell++){
+        if(((curMemCell % 10) == 0)) printf("\n\t\t");
+        printf(SET_STYLE_ITALICS_FONT_GREEN "%d " RESET, ram[curMemCell]);
     }
 }

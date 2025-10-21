@@ -1,6 +1,8 @@
 #include "cmd_spu.h"
 #include "cmd_math.h"
 
+#define $ fprintf(stderr, "MEOW in %s:%d\n", __FILE__, __LINE__);
+
 static bool unaryOperation(processor* spu, unaryHandler handler);
 static bool binaryOperation(processor* spu, binaryHandler handler);
 static bool jumpOperation(processor* spu, binaryHandler handler);
@@ -83,6 +85,35 @@ bool popreg(processor* spu){
 
     spuGetArg(spu,  &regNum);
     spuPopReg(spu, &regNum);
+
+    return true;
+}
+
+bool pushm(processor* spu){
+    cmdParam_t regNum = 0;
+
+    spuGetArg(spu, &regNum);
+    spuPushReg(spu, &regNum);
+
+    cmdParam_t memCellNum = 0;
+    spuPop(spu, &memCellNum);
+
+    spuPushM(spu, &memCellNum);
+
+    return true;
+}
+
+bool popm(processor* spu){
+    cmdParam_t regNum = 0;
+$
+$   spuGetArg(spu, &regNum);
+
+$   spuPushReg(spu, &regNum);
+$
+$   cmdParam_t memCellNum = 0;
+$   spuPop(spu, &memCellNum);
+$
+$   spuPopM(spu, &memCellNum);
 
     return true;
 }

@@ -84,7 +84,7 @@ static bool listing(translator_t* translator){
 
     FILE* listingPtr = myOpenFile(&inputFile);
 
-    for(size_t curStringInd = 0; curStringInd < translator->input_buffer.count - 1; curStringInd++){
+    for(size_t curStringInd = 0; curStringInd < translator->input_buffer.count; curStringInd++){
         translator->curState.StringInd = curStringInd;
 
         if(getLabel(translator)) continue;
@@ -208,12 +208,19 @@ static bool addCommandParameter(translator_t* translator){
 
     return true;
 }
-///
+
 static bool addRegParameter(translator_t* translator){
     assert(translator);
 
     char reg[REGISTER_NAME_MAX_SIZE];
-    sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s %sX\n", reg);
+
+    if(translator->opcode.ptr[translator->opcode.size - 1] == PUSHM || 
+       translator->opcode.ptr[translator->opcode.size - 1] == POPM){
+        sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s [%sX]\n", reg);
+    }
+    else{
+        sscanf(translator->input_buffer.ptrs[translator->curState.StringInd].ptr, "%*s %sX\n", reg);
+    }
     
     translator->opcode.ptr[translator->opcode.size] = reg[0] - UPPER_SYM_MIN;
     

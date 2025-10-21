@@ -1,15 +1,14 @@
 #include "ram.h"
-#include "poison.h"
+#include "general/poison.h"
 
 #include <stdlib.h>
 #include <assert.h>
 
-bool ramCtor(ram_t* ram){
-    assert(ram);
+ram_t* ramCtor(){
 
-    ram = (ram_t*) calloc(RAM_CAPACITY, sizeof(ram_t));
+    ram_t* ram = (ram_t*) calloc(RAM_CAPACITY, sizeof(ram_t));
 
-    return true;
+    return ram;
 }
 
 bool ramDtor(ram_t* ram){

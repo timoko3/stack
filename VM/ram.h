@@ -1,8 +1,13 @@
+#ifndef RAM_H
+#define RAM_H
+
 #include <stddef.h>
 
 typedef int ram_t;
 
 const size_t RAM_CAPACITY = 100;
 
-bool ramCtor(ram_t* ram);
+ram_t* ramCtor();
 bool ramDtor(ram_t* ram);
+
+#endif /* RAM_H */

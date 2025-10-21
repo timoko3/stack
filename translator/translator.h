@@ -9,7 +9,7 @@
 
 const int    ASSEMBLE_FAILURE       = -1;
 
-const size_t COMMAND_NAME_MAX_SIZE  = 10;
+const size_t COMMAND_NAME_MAX_SIZE  = 50;
 const size_t REGISTER_NAME_MAX_SIZE = 5;
 const size_t LABEL_NAME_MAX_SIZE    = 20;
 
