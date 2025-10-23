@@ -38,6 +38,8 @@ bool hlt(processor* spu);
 bool callFunc(processor* spu);
 bool retFunc(processor* spu);
 
+bool draw(processor* spu);
+
 #endif /* CMD_SPU_H */
 
 

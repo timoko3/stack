@@ -58,6 +58,30 @@ bool jne(processor* spu){
     return jumpOperation(spu, neMath);
 }
 
+bool draw(processor* spu){
+    $
+    cmdParam_t fieldSideSize = 0;
+
+    spuPop(spu, &fieldSideSize);
+    printf("fieldSize = %d\n", fieldSideSize);
+    for(cmdParam_t curMemCellInd = 0; curMemCellInd < fieldSideSize * fieldSideSize; curMemCellInd++){
+        spuPushM(spu, &curMemCellInd);
+        cmdParam_t curMemCellVal = 0;
+        spuPop(spu, &curMemCellVal);
+
+        if((curMemCellInd % fieldSideSize) == 0) printf("\n");
+        
+        if(curMemCellVal != 0){
+            printf(SET_STYLE_BOLD_FONT_GREEN "%d " RESET, curMemCellVal);
+        }
+        else{
+            printf(SET_STYLE_BOLD_FONT_RED "%d " RESET, curMemCellVal);
+        }
+    }
+
+    return true;
+}
+
 bool jmp(processor* spu){
     int pos = 0;
     spuGetArg(spu, &pos);

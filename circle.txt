@@ -1,16 +1,23 @@
-IN  ;AMOUNT OF cells
-
-POPREG AX
-PUSHREG AX ;Получение координат центра
-SQRT
-POPREG JX
-
 PUSH -1 ;инициализация счетчика и координат
 POPREG BX
-POPREG AX
 
 IN ;RADIUS
+POPREG IX
+PUSHREG IX
+
 POPREG FX
+
+PUSHREG FX ;Подсчет размера стороны поля 
+PUSH 2
+MUL
+PUSH 1
+ADD
+POPREG JX
+
+PUSHREG JX ;подсет размера целого поля 
+PUSHREG JX
+MUL
+POPREG AX
 
 PUSHREG FX ;Подсчет r квадрата
 PUSHREG FX
@@ -23,12 +30,13 @@ PUSH 1
 ADD
 POPREG BX
 
-PUSHREG BX
+PUSHREG BX ;Проверка на выход за границы рабочей области
 PUSHREG AX
-JB :print
-
-OUT
+JB :print 
+PUSHREG JX
+DRAW
 HLT
+
 
 :print
 PUSHREG BX ;Подсчет y
@@ -41,46 +49,43 @@ PUSHREG CX
 PUSHREG JX
 MUL
 SUB
-POPREG EX
+POPREG DX
 
-PUSHREG JX ;Подсчет x - x0
-PUSH 2
-DIV
-PUSHREG EX
-SUB
-ABS
-POPREG EX
 
-PUSHREG JX ;Подсчет y - y0
-PUSH 2
-DIV
+PUSHREG IX ;Подсчет y - y0
 PUSHREG CX
 SUB
-ABS
 POPREG CX
 
-PUSHREG EX ;квадрат x - x0 подсчет
-PUSHREG EX
-MUL 
-POPREG  EX
+PUSHREG IX ;Подсчет x - x0
+PUSHREG DX
+SUB
+POPREG DX
+
 
 PUSHREG CX ;квадрат y - y0 подсчет
 PUSHREG CX
 MUL 
 POPREG  CX
 
+
+PUSHREG DX ;квадрат x - x0 подсчет
+PUSHREG DX
+MUL 
+POPREG  DX
+
+
 PUSHREG CX ;считаем растояние
-PUSHREG EX
+PUSHREG DX
 ADD
 
 PUSHREG FX
 
 SUB
-ABS
 POPREG GX
 
 PUSHREG GX
-PUSH 50
+PUSH 5  ;Парметр точности
 JA :skip
 
 PUSH 5

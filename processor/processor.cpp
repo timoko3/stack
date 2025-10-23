@@ -74,7 +74,6 @@ bool executeCommand(processor* spu){
     for(size_t curCommandInd = 0; curCommandInd <  sizeof(commands) / sizeof(command_t); curCommandInd++){
         if(commands[curCommandInd].code == spu->opcode.ptr[spu->pc]){
             command_t curCmd = commands[curCommandInd];
-            $
             assert(curCmd.handler);
             size_t old_ps = spu->pc;
             ///
@@ -280,7 +279,7 @@ static void printRam(ram_t* ram){
     assert(ram);
 
     for(size_t curMemCell = 0; curMemCell < RAM_CAPACITY; curMemCell++){
-        if(((curMemCell % 100) == 0)) printf("\n\t\t");
+        if(((curMemCell % 32) == 0)) printf("\n\t\t");
         printf(SET_STYLE_ITALICS_FONT_GREEN "%d " RESET, ram[curMemCell]);
     }
 }
